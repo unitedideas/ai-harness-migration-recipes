@@ -8,8 +8,18 @@ from pathlib import Path
 REQUIRED_SECTIONS = [
     "## The file layouts",
     "## Mapping each piece",
+]
+
+PITFALL_SECTIONS = [
     "## Pitfalls",
+    "## Things that will silently break",
+    "## Silent breakages: Codex → Aider",
+]
+
+CHECKLIST_SECTIONS = [
     "## Checklist",
+    "## Migration checklist",
+    "## Doing this by hand",
 ]
 
 RECIPE_PAIRS = [
