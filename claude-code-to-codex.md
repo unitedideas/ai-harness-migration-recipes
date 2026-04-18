@@ -1,6 +1,8 @@
 # How to migrate your Claude Code agent to Codex
 
-**TL;DR** — Claude Code uses `~/.claude/` with `CLAUDE.md` + `agents/` + `skills/`. Codex uses `~/.codex/config.toml` (TOML format). Both support subagents and MCP, but Codex's personality/preferences live in config, not a single identity file. This recipe maps every piece you'll need to move, the format differences to watch out for, and what you'll lose in the translation.
+**TL;DR** — Claude Code uses `~/.claude/` with `CLAUDE.md` + `agents/` + `skills/`. Codex (the OpenAI CLI tool) uses `~/.codex/` with `AGENTS.md` + `config.toml`. The good news: skills are identical, MCP support is native. The bad news: Codex has no hook system and config format is TOML, not JSON.
+
+Below is the manual recipe for migrating Claude Code → Codex, including file layouts, field-by-field mappings, and the things that break if you copy-paste. At the end I link to a one-command tool that does this automatically.
 
 ---
 
@@ -20,41 +22,58 @@
 └── projects/-/memory/*.md        # persistent memory files
 ```
 
+Most important: `CLAUDE.md` is your identity. Everything else is incremental.
+
 ### Codex (destination)
 
 ```
 ~/.codex/
-├── config.toml                   # identity + preferences (TOML format)
-├── auth.json                     # optional credentials file
-├── hooks.json                    # lifecycle hooks (experimental)
-└── [optional project overrides]
-  .codex/
-  └── config.toml                 # project-level config override
+├── AGENTS.md                     # identity + top-level preferences (replaces CLAUDE.md)
+├── config.toml                   # structured config (MCP, model, features, approvals)
+├── skills/
+│   └── <skill-name>/SKILL.md     # identical format to Claude Code
+└── hooks.json                    # optional hook config (limited, experimental)
+
+$REPO_ROOT/
+├── AGENTS.md                     # project-level rules (optional override)
+└── .agents/skills/               # project-level skills (optional)
 ```
 
-**Key difference:** Codex is much simpler at the filesystem level. There's no `agents/` or `skills/` directory — everything is in the config file or project conventions. Project-level config lives in `.codex/config.toml` (at the project root), not in the global `~/.codex/`.
+Three structural differences:
+
+1. **Rules files are named differently.** Claude Code uses `CLAUDE.md`, Codex uses `AGENTS.md`. They're semantically identical (both Markdown, both global/project-layered), just named differently per the Linux Foundation Agentic AI standard.
+
+2. **Config format changed.** Claude Code's `settings.json` (JSON) becomes `config.toml` (TOML). This includes all MCP server configs, model selection, and feature flags.
+
+3. **Skills paths changed.** Claude Code: `~/.claude/skills/`. Codex: `~/.agents/skills/`. The `SKILL.md` format itself is identical.
+
+4. **No hooks system.** Codex has an experimental `hooks.json` but it's coarse and doesn't map to Claude Code's 17 lifecycle events. You lose hook-based automation.
 
 ---
 
 ## Mapping each piece
 
-### `CLAUDE.md` → `~/.codex/config.toml`
+### `CLAUDE.md` → `AGENTS.md`
 
-Your `CLAUDE.md` is a Markdown document with prose + inline key-value pairs. Codex's config is pure TOML. Here's what maps:
+The rules file is a straight rename with no format changes — both are Markdown. But watch for Claude Code-specific fields that Codex won't recognize:
 
-| Claude Code (`CLAUDE.md`) | Codex (`config.toml`) | Notes |
+| Claude Code section | Codex equivalent | Notes |
 |---|---|---|
-| Your "Mission" / voice section | `personality = "pragmatic"` (or `"friendly"`, `"none"`) | Codex offers preset personalities; you can't embed free-form prose |
-| Model tier decisions (Haiku/Sonnet/Opus for different tasks) | `model = "gpt-5.4"` + `[profiles.deep-review]` with `model = "gpt-5-pro"` | Codex doesn't support per-agent model routing; use profiles instead |
-| Rules / constraints (no assumptions, always verify, etc.) | None — Codex has no direct equivalent | You lose this. Document in a project `CONVENTIONS.md` and set `read: [CONVENTIONS.md]` in project config |
-| Infrastructure / secrets management | `[shell_environment_policy]` + `approval_policy` | Codex handles secrets differently; see "Silent breakages" |
-| Platform knowledge / external API docs | Not in config; use read-only files via project config | Create a `docs/` folder with your notes, add to `read` in project config |
+| `## How I Operate` | `## Operating principles` | Same idea, may need reword |
+| `## Golden Rules` | `## Working agreements` | Same intent, different section name |
+| Tool names (e.g., `Bash` tool) | Same tool names | Codex tool names are identical |
+| `### Rule X: No assumptions` | Keep as-is | Codex respects structured rule sections |
+| References to `.claude/` paths | Change to `~/.codex/` or `~/.agents/` | Update any hardcoded paths |
+| References to Claude Code-specific features (hooks, settings.json) | Replace with Codex equivalents | Hooks don't exist; config goes in config.toml |
 
-### `agents/<name>.md` → Codex profiles
+**Action:** Copy `~/.claude/CLAUDE.md` to `~/.codex/AGENTS.md`, do a find-and-replace for `.claude/` → `.codex/`, and strip any Claude Code-specific guidance (e.g., "/hookify" commands, "settings.json adjustment" steps). The rest ports 1:1.
 
-Claude Code agents are subagents with their own model tier + tools. Codex doesn't have explicit subagents, but it has **profiles** for task-specific model configs:
+For project-level overrides, also create `$REPO_ROOT/AGENTS.md` (same content as the user-level file if you're still developing).
 
-**Claude Code agent example:**
+### `agents/<name>.md` → Codex agents
+
+Claude Code subagents:
+
 ```markdown
 ---
 name: code-reviewer
@@ -63,170 +82,176 @@ tools: Read, Grep, Glob, Bash
 model: sonnet
 ---
 
-You review Go code...
+You review Go code. First, read...
 ```
 
-**Codex profile equivalent** (`config.toml`):
-```toml
-[profiles.code-reviewer]
-model = "gpt-4o"  # no Sonnet/Opus tiers in Codex; map Sonnet→gpt-4o, Opus→gpt-5-pro
-approval_policy = "never"  # equivalent to "read-only tools" via trust model
+Codex doesn't have a separate "subagent" concept. Instead, agents are invoked via `codex agent <name>` and read their rules from `~/.codex/agents/<name>.md`.
+
+**Best practice:** Keep subagents as separate files in `~/.codex/agents/`, following the same naming:
+
+```
+~/.codex/
+├── AGENTS.md                   # global identity
+└── agents/
+    ├── code-reviewer.md        # migrated from Claude Code
+    ├── discovery.md
+    └── ...
 ```
 
-Then invoke via CLI: `codex --profile code-reviewer <task>`
+Each agent file has the same frontmatter (minus the `tools` field):
 
-**Limitations:**
-- Codex profiles don't have explicit tool allowlists. You lose the per-agent scoping.
-- No way to say "this profile uses Read/Grep/Bash only" — the model decides which tools to use.
-- Profiles are CLI-selected, not auto-invoked like Claude Code agents.
+```markdown
+---
+name: code-reviewer
+description: Reviews Go code for correctness
+model: claude-opus-4-7
+---
 
-### `skills/<slug>/SKILL.md` → Not directly supported
-
-Codex has no native skills system. Your options:
-
-1. **Inline into config:** If the skill is small, convert it to a `[profiles.<skillname>]` with the procedure in the profile description.
-2. **Conventions file:** Add it to a project `CONVENTIONS.md` and reference via `read: [CONVENTIONS.md, skills/my-skill.md]`.
-3. **Accept the loss:** Codex's model selection and profiles serve the same purpose (task-specific behavior), so skills may not be needed.
-
-### `projects/-/memory/*.md` → Not directly supported
-
-Codex has no built-in memory system like Claude Code. You have two options:
-
-1. **Promote to CONVENTIONS:** Merge load-bearing memories into a project `CONVENTIONS.md` file. Add `read: [CONVENTIONS.md]` to your project config.
-2. **Accept the loss:** Codex doesn't have session memory, so re-provide context each conversation.
-
-### Hooks (`~/.claude/hooks/*.py`) → `~/.codex/hooks.json` (experimental)
-
-Codex has an **experimental** hooks system in `~/.codex/hooks.json`. Structure:
-
-```json
-{
-  "pre_chat": [
-    {
-      "name": "my-pre-chat-hook",
-      "script": "/path/to/script.py",
-      "trigger": "always"
-    }
-  ],
-  "post_chat": [
-    {
-      "name": "my-post-chat-hook",
-      "script": "/path/to/script.py",
-      "trigger": "always"
-    }
-  ]
-}
+You review Go code. First, read...
 ```
 
-**Caveat:** Codex hooks are experimental and less mature than Claude Code's. Test thoroughly.
+| Claude Code field | Codex equivalent | Notes |
+|---|---|---|
+| `name` | `name` | Same |
+| `description` | `description` | Same |
+| `tools` | — | Codex doesn't scope tools per agent; agents have full access |
+| `model` | `model` | Same; Codex defaults to GPT-5.4 if omitted |
 
-### MCP servers
+You lose the per-agent tool allowlist. If you had a read-only code-reviewer, Codex agents can't be restricted that way — all agents have the same tool access.
 
-Both tools support MCP. The wiring is different:
+### `skills/<slug>/SKILL.md` → `~/.agents/skills/<slug>/SKILL.md`
 
-- **Claude Code:** `~/.claude/settings.json` under `mcpServers` (JSON).
-- **Codex:** `~/.codex/config.toml` under `[mcp_servers.<server_id>]` (TOML).
+This is the cleanest migration — skills are format-identical.
 
-If you have a remote MCP server (e.g., `https://example.com/mcp`), convert your JSON config to TOML:
+Claude Code:
+```
+~/.claude/skills/
+└── simplify/SKILL.md
+```
 
-**Claude Code:**
+Codex:
+```
+~/.agents/skills/
+└── simplify/SKILL.md
+```
+
+The file format is identical — YAML frontmatter + Markdown body. Just move the files:
+
+```bash
+cp -r ~/.claude/skills/* ~/.agents/skills/
+```
+
+The only gotcha: if your skills have asset files (templates, scripts, etc.), verify they moved with the directory. Codex treats the skill directory the same way Claude Code does.
+
+### `projects/-/memory/*.md` → `AGENTS.md` (memory)
+
+Claude Code has a persistent memory system with per-memory files. Codex doesn't have an equivalent built-in memory system.
+
+Options:
+
+1. **Accept the loss.** Memories often go stale anyway. Starting fresh on Codex might be cleaner.
+2. **Manually promote load-bearing memories to `~/.codex/AGENTS.md`.** For instance, if you have a memory about "always run tests in this project," just add that as a bullet point in the `AGENTS.md` under a `## Project memory` section.
+3. **Store them as comments in `.agents/skills/` or `~/.agents/memory/` directory.** Not auto-loaded, but discoverable.
+
+### `settings.json` → `config.toml`
+
+Claude Code config (settings.json):
+
 ```json
 {
   "mcpServers": {
-    "my-mcp": {
-      "command": "npx",
-      "args": ["@my-org/mcp-server"],
-      "env": { "API_KEY": "${API_KEY}" }
+    "firecrawl": {
+      "command": "node",
+      "args": ["/path/to/firecrawl-mcp.js"]
     }
   }
 }
 ```
 
-**Codex:**
+Codex config (config.toml):
+
 ```toml
-[mcp_servers.my-mcp]
-command = "npx"
-args = ["@my-org/mcp-server"]
-[mcp_servers.my-mcp.env]
-API_KEY = "${API_KEY}"
+[mcpServers.firecrawl]
+type = "stdio"
+command = "node"
+args = ["/path/to/firecrawl-mcp.js"]
+
+[core]
+model = "claude-opus-4-7"
 ```
+
+Key differences:
+
+| Claude Code (settings.json) | Codex (config.toml) | Notes |
+|---|---|---|
+| `mcpServers` → `[mcpServers.<name>]` | Same structure, TOML syntax | Codex adds a `type` field (`stdio`, `sse`) |
+| `permissions.*` | (No direct equivalent) | Codex doesn't have permission scoping |
+| `model` (global) | `[core]` or `[approvals]` model | May be in different section |
+| `tools.*` | (No equivalent) | Codex doesn't have per-tool permissions |
+
+**Action:** Convert `settings.json` to TOML format. Use `codex config` CLI for guided setup, or manually write `~/.codex/config.toml`. For MCP servers, convert JSON to TOML and ensure each server has `type = "stdio"` or `type = "sse"`.
+
+### Hooks (`~/.claude/hooks/*.py`)
+
+**These don't port.** Codex has an experimental `hooks.json` but it doesn't map to Claude Code's lifecycle events (SessionStart, PreToolUse, StopHook, etc.). 
+
+Options:
+
+1. **Accept the loss.** If your hooks enforced policy (e.g., "never run rm -rf"), document that requirement and rely on Codex's audit features instead.
+2. **Rebuild in your project.** For critical hooks, implement them as a CI/CD pipeline step or wrapper script.
+3. **Use Codex's audit trail.** Codex logs all agent actions; integrate with external monitoring instead.
+
+For each hook, document what it did and manually re-implement the critical ones at the application layer.
 
 ---
 
 ## Things that will silently break
 
-1. **Per-agent model selection doesn't exist.** If you wrote "use Opus for this subagent", you'll need to manually select a profile or accept Codex's default model. Codex doesn't auto-route agents to different models.
+1. **Path references to `.claude/`.** If your `AGENTS.md` mentions `~/.claude/scripts/foo.sh`, Codex won't have that directory. Update paths to `~/.codex/` or `~/.agents/`.
 
-2. **Tool allowlists are gone.** Your careful scoping ("this code-reviewer agent can only use Read/Grep") becomes unenforced. Codex's model decides which tools to use globally.
+2. **Tool availability assumptions.** Claude Code and Codex share most tool names, but some differ slightly. Check the tool names in your AGENTS.md against Codex's tool list.
 
-3. **Hooks are experimental.** If you rely on stop-hook enforcement (e.g., `golden_rules_stop.py`), test thoroughly. Codex's hook system may not be stable.
+3. **Hook-based automation.** If you relied on a StopHook to run tests or a PreToolUse hook to validate permissions, those don't exist in Codex. Document the requirement and implement elsewhere.
 
-4. **No memory persistence.** Codex doesn't carry memories between conversations. You'll need to re-provide context or keep a `CONVENTIONS.md` file.
+4. **Model references.** If you wrote "use Opus 4.6," Codex defaults to GPT-5.4. Update model names in `AGENTS.md` to match what Codex supports (check `codex config list-models`).
 
-5. **Relative paths and `~` expansion.** If your `CLAUDE.md` references `~/.claude/scripts/foo.sh` or `/Users/you/projects/`, those paths are hardcoded. Codex won't have `~/.claude/` so you'll need to update paths.
+5. **`$ARGUMENTS` and other Claude Code variables.** Codex doesn't expand these. Remove or rephrase.
 
-6. **Environment variable references like `${SOME_VAR}` in config.** Codex supports this in `[shell_environment_policy]` and MCP config, but not in prose comments. Don't embed secrets in config file comments.
-
-7. **Personality is preset, not free-form.** You lose the ability to write a multi-paragraph "voice" section. Codex offers `"friendly"`, `"pragmatic"`, or `"none"`. That's it.
+6. **Memory files in conversation context.** Codex doesn't auto-inject memory files. If your flow relied on memories being present, manually promote them to `AGENTS.md` or store them differently.
 
 ---
 
-## Manual checklist
+## Doing this by hand
 
-1. **Create `~/.codex/config.toml`:**
-   ```toml
-   model = "gpt-4o"  # or "gpt-5-pro" if you were using Opus
-   personality = "pragmatic"
-   
-   [features]
-   memories = false  # or true if you want history persistence
-   shell_snapshot = true
-   
-   [mcp_servers.my-mcp]
-   # (copy your MCP configs, converting from JSON to TOML)
-   ```
+1. `cp ~/.claude/CLAUDE.md ~/.codex/AGENTS.md`. Do a find-and-replace for `.claude/` → `.codex/` and strip Claude Code-specific sections.
+2. `mkdir -p ~/.agents/skills`; `cp -r ~/.claude/skills/* ~/.agents/skills/`.
+3. For each file in `~/.claude/agents/`: create `~/.codex/agents/<name>.md` with the same content (keep frontmatter, strip `tools` field).
+4. Convert `~/.claude/settings.json` → `~/.codex/config.toml`. Use `codex config` CLI for help, or manually write TOML format.
+5. For MCP servers: list each under `[mcpServers.<name>]`, add `type = "stdio"` or `type = "sse"`, paste the command and args.
+6. Skim your memory files (`~/.claude/projects/-/memory/`); promote 2-3 load-bearing memories to `AGENTS.md` under a `## Project memory` section.
+7. Document what your hooks did; plan re-implementation if critical.
+8. Run `codex --version` to verify setup. Try `codex agent list` to see your agents.
 
-2. **For each agent in `~/.claude/agents/`, create a profile:**
-   - `code-reviewer.md` → `[profiles.code-reviewer]` in config.toml with the agent description + recommended approval_policy
-
-3. **For each skill in `~/.claude/skills/`, decide:**
-   - Small/critical? → Add to project `CONVENTIONS.md` with `read: [CONVENTIONS.md]`
-   - Large/optional? → Archive it in a project folder and reference via `read: [skills/my-skill.md]`
-
-4. **Copy load-bearing memories to `CONVENTIONS.md`:**
-   - Read through `~/.claude/projects/-/memory/*.md`
-   - Promote 2-3 files that contain rules/patterns you actually use
-   - Delete or archive the rest
-
-5. **Update MCP server configs:**
-   - Convert from `~/.claude/settings.json` format to Codex TOML format
-   - Test each MCP server with a simple query
-
-6. **Update any CLI scripts or automation:**
-   - If you had `~/.claude/scripts/` referenced anywhere, update paths to point to new locations
-   - Update any Codex invocations to use `--profile <name>` instead of agent names
-
-7. **Disable hooks if not needed:**
-   - If you weren't using hooks, leave `~/.codex/hooks.json` unwritten
-   - If you were, port them to JSON and test thoroughly (experimental feature)
-
-8. **Create a project `.codex/config.toml` if project-specific:**
-   - For any config that's project-specific (not global), create `.codex/config.toml` at the project root
-   - Project config cascades over user config
-
-9. **Test a few conversations:**
-   - Run `codex "prompt"` and verify your voice / model selection is preserved
-   - Run `codex --profile code-reviewer "review this Go file"` and verify profile works
-   - Test MCP servers with a tool call
-
-10. **Clean up old files:**
-    - `rm -rf ~/.claude/` once you're confident the migration worked
-    - Or keep it as a backup until you're sure Codex works for you
+Figure 15-30 minutes if you have a non-trivial setup.
 
 ---
 
-## Notes
+## Doing this with one command
 
-- **Model names differ.** Claude Code uses `haiku`, `sonnet`, `opus`. Codex uses `gpt-4o`, `gpt-5-pro`, `gpt-5.4`. Map your tier choice to Codex's model list.
-- **Profiles are manual, not auto-invoked.** You can't set up a trigger like "when the file is `*.go`, use code-reviewer profile". You select the profile on the command line.
-- **Codex is newer and less feature-complete than Claude Code.** Hooks, memory, subagents are less mature. If you rely heavily on automation, consider waiting or staying on Claude Code.
+[BringYour](https://bringyour.ai) does this whole thing in a single command:
+
+```
+npx portable migrate --from claude-code --to codex
+```
+
+It reads `~/.claude/`, maps everything to Codex's layout, converts JSON config to TOML, validates MCP servers, scrubs PII, signs the bundle with ed25519, and emits the file tree. You review everything before it's applied — nothing auto-writes without your OK.
+
+Launch pricing: first 10 buyers at $19 lifetime, next 10 at $29, then $49 (rising as traction grows). One payment, every current feature + every future tool in the Foundry Practitioner Toolkit.
+
+[Grab a $19 slot →](https://bringyour.ai/buy) · [See how it works →](https://bringyour.ai/how-it-works)
+
+---
+
+## Footnote — why this exists
+
+Codex is a solid open-source CLI with native MCP support. The AGENTS.md standard (now backed by the Linux Foundation) is becoming the default across multiple tools. Migrating to it is straightforward — the only real loss is hooks, and for most use cases those are nice-to-have, not critical.
