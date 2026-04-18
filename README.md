@@ -10,7 +10,7 @@ Every AI coding tool stores your agent differently. **Claude Code** uses
 between them by hand means rewriting your system prompt in a new format
 each time and hoping nothing silently breaks.
 
-This repo is the manual recipes for all **11 bidirectional migrations** 
+This repo is the manual recipes for all **12 bidirectional migrations** 
 (4 tools, 4 × 3 ÷ 2 unique pairs = 6 directions per tool). One file per 
 migration pair, each showing the source and target layouts, the format 
 differences, and the subtle things that will bite you if you copy-paste.
