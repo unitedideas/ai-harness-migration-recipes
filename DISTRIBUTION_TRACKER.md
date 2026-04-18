@@ -79,9 +79,21 @@ All 12 recipes complete. This tracker monitors submission status across distribu
 - PR interest in awesome lists
 
 ## Action Items (Shane)
+
+### Immediate (5-10 min each — **START HERE**)
+- [ ] **Awesome-list submissions**: See [SUBMISSION_PLAYBOOK.md](./SUBMISSION_PLAYBOOK.md) for exact copy-paste commands
+  - [ ] awesome-cli-apps (3.2k★)
+  - [ ] awesome-developer-tools (3.1k★)
+  - [ ] awesome-ai-tools (2.2k★)
+
+### Social Media (need accounts)
 - [ ] Publish dev.to article (link goes to GitHub repo)
 - [ ] Post Twitter thread (cite @bringyour)
 - [ ] Submit to HackerNews
+- [ ] Post LinkedIn article
+
+### MCP Directories (browser/identity)
 - [ ] Register Glama for NHS + BringYour MCPs
+- [ ] Submit to hesreallyhim/awesome-claude-code via GitHub issue
 - [ ] Check appcypher/awesome-mcp-servers PR eligibility
-- [ ] Submit to hesreallyhim/awesome-claude-code via issue
+- [ ] Cursor Marketplace, Smithery, MCP Market, etc. (see DISTRIBUTION_TRACKER.md lines 28-50)
