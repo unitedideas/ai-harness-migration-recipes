@@ -14,7 +14,7 @@ Submit these as PRs to the respective repositories.
 Find the section for "Development" or "DevOps / Infrastructure" and add:
 
 ```markdown
-- [ai-harness-migration-recipes](https://github.com/unitedideas/ai-harness-migration-recipes) - Hand-written, hand-tested migrations for moving your AI coding agent's configuration (CLAUDE.md, cursorrules, codex config, aider.conf) between Claude Code ↔ Cursor ↔ Codex ↔ Aider. Covers 9/11 pairs with detailed silent-breakage guides.
+- [ai-harness-migration-recipes](https://github.com/unitedideas/ai-harness-migration-recipes) - Hand-written, hand-tested migrations for moving your AI coding agent's configuration (CLAUDE.md, cursorrules, codex config, aider.conf) between Claude Code ↔ Cursor ↔ Codex ↔ Aider. All 12/12 bidirectional pairs with detailed silent-breakage guides.
 ```
 
 **PR Title:** `Add AI harness migration recipes`
@@ -30,7 +30,7 @@ It's a reference guide for developers switching between AI coding agents
 guide for migrating agent configuration between these tools.
 
 - Repo: https://github.com/unitedideas/ai-harness-migration-recipes
-- 9/11 bidirectional pairs documented + tested
+- All 12/12 bidirectional pairs documented + hand-tested
 - Clear silent-breakage callouts for each migration
 - CC BY 4.0 license
 - Actively maintained
@@ -47,7 +47,7 @@ guide for migrating agent configuration between these tools.
 Find "Development Environments" or "Configuration" and add:
 
 ```markdown
-- [AI Harness Migration Recipes](https://github.com/unitedideas/ai-harness-migration-recipes) - Migration guides for moving AI agent config between Claude Code, Cursor, Codex, and Aider. Includes silent-breakage callouts and step-by-step checklists for 9 tested pairs.
+- [AI Harness Migration Recipes](https://github.com/unitedideas/ai-harness-migration-recipes) - Complete migration guides for moving AI agent config between Claude Code, Cursor, Codex, and Aider. All 12/12 pairs with silent-breakage callouts and step-by-step checklists.
 ```
 
 **PR Title:** `Add AI harness migration recipes`
@@ -63,7 +63,7 @@ Problem it solves: Every AI coding tool (Claude Code, Cursor, Codex, Aider)
 stores agent config differently. Migrating by hand means rewriting your 
 system prompt in a new format each time and hoping nothing silently breaks.
 
-This repo documents 9 bidirectional pairs with:
+This repo documents all 12 bidirectional pairs with:
 - File-by-file mapping tables
 - Silent-breakage callouts (relative paths, model assumptions, tool references)
 - Manual checklists
@@ -83,7 +83,7 @@ Link: https://github.com/unitedideas/ai-harness-migration-recipes
 Find "Development" or "IDE / Code Editors" section:
 
 ```markdown
-- [AI Harness Migration Recipes](https://github.com/unitedideas/ai-harness-migration-recipes) - Guide to migrate AI agent configuration between Claude Code, Cursor, Codex, and Aider. Covers 9/11 pairs with detailed migration checklists and silent-breakage documentation.
+- [AI Harness Migration Recipes](https://github.com/unitedideas/ai-harness-migration-recipes) - Complete guide to migrate AI agent configuration between Claude Code, Cursor, Codex, and Aider. All 12/12 pairs with detailed migration checklists and silent-breakage documentation.
 ```
 
 **PR Title:** `Add AI harness migration recipes`
@@ -100,8 +100,8 @@ differently. No guide existed for migrating between them without losing
 or breaking critical config.
 
 This repo provides:
-- 9 tested, hand-verified migration recipes
-- File-by-file mapping tables
+- All 12 tested, hand-verified migration recipes
+- File-by-file mapping tables for every pair
 - Explicit silent-breakage documentation (what will silently fail)
 - Step-by-step checklists
 - 100% hand-tested, not theoretical
@@ -120,7 +120,7 @@ Repo: https://github.com/unitedideas/ai-harness-migration-recipes
 Under "Software" or new "AI Tools" section:
 
 ```markdown
-- [AI Harness Migration Recipes](https://github.com/unitedideas/ai-harness-migration-recipes) - Recipes for migrating AI agent configuration (Claude Code → Cursor → Codex → Aider). 9/11 pairs documented with silent-breakage callouts and migration checklists.
+- [AI Harness Migration Recipes](https://github.com/unitedideas/ai-harness-migration-recipes) - Recipes for migrating AI agent configuration (Claude Code ↔ Cursor ↔ Codex ↔ Aider). All 12/12 pairs with silent-breakage callouts and migration checklists.
 ```
 
 **PR Title:** `Add AI harness migration recipes`
@@ -132,13 +132,11 @@ Under "Software" or new "AI Tools" section:
 Added AI harness migration recipes—a guide for migrating AI coding agent 
 configuration between different tools.
 
-Currently covers:
-- Claude Code ↔ Cursor
-- Claude Code ↔ Codex
-- Claude Code ↔ Aider
-- Cursor ↔ Codex
-- Cursor ↔ Aider
-- Codex ↔ Cursor
+Complete coverage:
+- Claude Code ↔ Cursor, Codex, Aider
+- Cursor ↔ Codex, Aider, Claude Code
+- Codex ↔ Cursor, Aider, Claude Code
+- Aider ↔ Claude Code, Cursor, Codex
 
 Each recipe includes file mappings, field-by-field conversions, and a 
 comprehensive list of things that silently break during migration.
