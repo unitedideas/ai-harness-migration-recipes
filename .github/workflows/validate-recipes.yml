@@ -1,0 +1,14 @@
+name: Validate Recipes
+
+on: [push, pull_request]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - name: Validate recipe structure
+        run: python3 tests/validate_recipes.py

@@ -1,7 +1,10 @@
 # Browser automation artifacts
 .playwright-mcp/
 *.png
+
+# YAML files (except GitHub Actions workflows)
 *.yml
+!.github/workflows/*.yml
 
 # IDE
 .vscode/

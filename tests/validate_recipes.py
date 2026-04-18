@@ -6,11 +6,10 @@ import sys
 from pathlib import Path
 
 REQUIRED_SECTIONS = [
-    "## Source layout",
-    "## Destination layout",
-    "## Field mappings",
-    "## Silent-breakage footguns",
-    "## Manual migration checklist",
+    "## The file layouts",
+    "## Mapping each piece",
+    "## Pitfalls",
+    "## Checklist",
 ]
 
 RECIPE_PAIRS = [

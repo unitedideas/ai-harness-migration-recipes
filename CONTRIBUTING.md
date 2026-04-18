@@ -8,11 +8,10 @@ Every recipe **must be hand-verified** by actually performing the migration. We 
 
 Each recipe file should follow this structure:
 
-1. **Source layout** — Directory tree and file purposes for the source tool
-2. **Destination layout** — Same for the target tool
-3. **Field mappings** — Table showing how configuration translates between tools
-4. **Silent-breakage footguns** — Gotchas that silently break if you miss them
-5. **Manual migration checklist** — Step-by-step walkthrough
+1. **The file layouts** — Directory tree and file purposes for both source and target tools
+2. **Mapping each piece** — Table showing how configuration translates between tools
+3. **Pitfalls** — Gotchas that silently break if you miss them
+4. **Checklist** — Step-by-step walkthrough
 
 ## Validation
 
@@ -32,10 +31,14 @@ Use the pattern `{from-tool}-to-{to-tool}.md`, e.g., `claude-code-to-cursor.md`.
 
 See [claude-code-to-cursor.md](claude-code-to-cursor.md) for a full example.
 
-### Source layout
+### The file layouts
+
+Show both source and target directory structures:
 
 ```markdown
-## Source layout
+## The file layouts
+
+### Claude Code (source)
 
 Claude Code stores configuration in `~/.claude/`:
 
@@ -43,65 +46,66 @@ Claude Code stores configuration in `~/.claude/`:
 ~/.claude/
 ├── CLAUDE.md          # Main identity/settings
 ├── agents/            # Subagents (optional)
-│   ├── code-reviewer.md
-│   └── discovery.md
 ├── skills/            # Custom skills (optional)
-│   └── my-skill/
-│       ├── SKILL.md
-│       └── index.ts
 ├── hooks/             # Event hooks (optional)
-│   └── custom-hook.py
 ├── projects/          # Per-project memory
-│   └── myproject/
-│       └── memory/
-│           └── context.md
 └── settings.json      # Tool config + MCP servers
 ```
+
+### Cursor (destination)
+
+Cursor stores configuration in the project root and `~/.cursor/`:
+
+```
+.cursorrules                  # Main identity prompt
+.cursor/
+├── mcp.json                  # MCP server config
+└── rules/                    # Skills as rules
+```
 ```
 
-### Field mappings
+### Mapping each piece
 
-Use a table to show how fields from source format map to destination:
+Use a table to show how fields translate:
 
 ```markdown
-## Field mappings
+## Mapping each piece
 
 | Claude Code | Cursor | Notes |
 |---|---|---|
-| `CLAUDE.md` (main prompt) | `.cursorrules` (text) | Cursor rules are plain text, not YAML |
-| `agents/*.md` | `.cursor/rules/*.mdc` | Similar structure, different file extension |
-| `skills/*/SKILL.md` | `.cursor/rules/skill-*.mdc` | Skills are rules in Cursor |
-| `hooks/*.py` | (no equivalent) | Cursor doesn't support event hooks |
+| `CLAUDE.md` | `.cursorrules` | Cursor rules are plain text |
+| `agents/*.md` | `.cursor/rules/*.mdc` | Similar structure, different extension |
+| `skills/*/SKILL.md` | `.cursor/rules/skill-*.mdc` | Skills become rules |
+| `hooks/*.py` | (no equivalent) | Cursor has no event hooks |
 | `settings.json.mcpServers` | `.cursor/mcp.json` | Different JSON structure |
 ```
 ```
 
-### Silent-breakage footguns
+### Pitfalls
 
-List things that will silently break:
+List gotchas that silently break:
 
 ```markdown
-## Silent-breakage footguns
+## Pitfalls
 
-1. **Relative paths in prompts** — If your CLAUDE.md references `./path/to/file`, Cursor rules won't find it the same way
-2. **Model names** — Claude Code uses `claude-opus-4-7`, Cursor uses `claude-opus-4` (different format)
-3. **MCP socket location** — Claude Code reads from `settings.json`, but Cursor won't if it's in wrong directory
+1. **Relative paths** — If your CLAUDE.md references `./path/to/file`, Cursor may not find it the same way
+2. **Model name format** — Claude Code uses `claude-opus-4-7`, Cursor expects `claude-opus-4`
+3. **MCP socket location** — Cursor looks for MCP config in project root, not `~/.cursor/`
 ```
 ```
 
-### Manual checklist
+### Checklist
 
 End with a numbered checklist:
 
 ```markdown
-## Manual migration checklist
+## Checklist
 
 1. [ ] Create or locate `.cursorrules` file in project root
-2. [ ] Copy the identity prompt from CLAUDE.md into `.cursorrules`
-3. [ ] Create `.cursor/` directory if it doesn't exist
-4. [ ] For each skill in `~/.claude/skills/`, create a matching `.cursor/rules/skill-*.mdc` file
-5. [ ] If using MCP servers, create `.cursor/mcp.json` with mapping from `settings.json.mcpServers`
-6. [ ] Test in Cursor: open a file and verify custom rules are applied
+2. [ ] Copy your identity prompt from CLAUDE.md into `.cursorrules`
+3. [ ] Create `.cursor/` directory and `mcp.json` if using MCP servers
+4. [ ] For each skill in `~/.claude/skills/`, create `.cursor/rules/skill-*.mdc`
+5. [ ] Test in Cursor: open a file and verify rules are applied
 ```
 ```
 
