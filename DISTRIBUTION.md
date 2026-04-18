@@ -41,7 +41,7 @@ Goal: Become the reference guide for agent migration knowledge work.
 **Description:**
 Hand-written, tested migrations for moving your AI coding agent's 
 configuration between Claude Code ↔ Cursor ↔ Codex ↔ Aider.
-Covers 9/11 pairs (55%+). Each recipe documents silent breakages, 
+All 12 bidirectional pairs complete. Each recipe documents silent breakages, 
 format differences, and step-by-step checklists.
 
 **Why it's useful:**
@@ -88,7 +88,7 @@ format differences, and step-by-step checklists.
 
 ## What NOT to do
 
-- ❌ Don't claim "complete" — 5/11 pairs are missing
-- ❌ Don't hide the blockers (need Codex/Aider installed for testing)
-- ❌ Don't oversell: this is a reference guide, not a tool
+- ❌ Don't oversell: this is a reference guide, not a tool (BringYour is the tool)
+- ❌ Don't hide the credit: these are hand-written, manually tested by humans
 - ❌ Don't submit to lists with low visibility (<1k stars) unless niche fit is perfect
+- ❌ Don't claim support for tools we haven't tested (Codex/Aider have the most edge cases)
