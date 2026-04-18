@@ -19,7 +19,7 @@ things that will bite you if you copy-paste.
 | From | To | Recipe |
 |---|---|---|
 | Claude Code | Cursor | [claude-code-to-cursor.md](claude-code-to-cursor.md) |
-| Cursor | Claude Code | _coming soon — PRs welcome_ |
+| Cursor | Claude Code | [cursor-to-claude-code.md](cursor-to-claude-code.md) |
 | Claude Code | Codex | _coming soon — PRs welcome_ |
 | Codex | Claude Code | _coming soon — PRs welcome_ |
 | Claude Code | Aider | _coming soon — PRs welcome_ |
