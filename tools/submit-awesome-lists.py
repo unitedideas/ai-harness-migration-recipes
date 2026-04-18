@@ -130,11 +130,13 @@ def submit_to_list(list_key: str, config: dict, dry_run: bool = False) -> bool:
     if not fork_repo(config["upstream_repo"], list_key, dry_run):
         return False
 
+    readme_path = config["readme_file"]
     if not dry_run:
         os.chdir(list_key)
+        readme_path = f"./{config['readme_file']}"
 
     # Add entry
-    if not add_entry_to_readme(config["readme_file"], config["section_name"], ENTRY, dry_run):
+    if not add_entry_to_readme(readme_path, config["section_name"], ENTRY, dry_run):
         if not dry_run:
             os.chdir("..")
         return False
