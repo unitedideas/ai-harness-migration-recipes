@@ -1,0 +1,11 @@
+# Browser automation artifacts
+.playwright-mcp/
+*.png
+*.yml
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
