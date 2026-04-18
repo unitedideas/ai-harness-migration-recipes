@@ -20,9 +20,9 @@ things that will bite you if you copy-paste.
 |---|---|---|
 | Claude Code | Cursor | [claude-code-to-cursor.md](claude-code-to-cursor.md) |
 | Cursor | Claude Code | [cursor-to-claude-code.md](cursor-to-claude-code.md) |
+| Claude Code | Aider | [claude-code-to-aider.md](claude-code-to-aider.md) |
 | Claude Code | Codex | _coming soon — PRs welcome_ |
 | Codex | Claude Code | _coming soon — PRs welcome_ |
-| Claude Code | Aider | _coming soon — PRs welcome_ |
 
 Each recipe documents:
 
