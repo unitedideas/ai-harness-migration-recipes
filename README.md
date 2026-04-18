@@ -23,7 +23,10 @@ things that will bite you if you copy-paste.
 | Claude Code | Codex | [claude-code-to-codex.md](claude-code-to-codex.md) |
 | Cursor | Claude Code | [cursor-to-claude-code.md](cursor-to-claude-code.md) |
 | Cursor | Aider | [cursor-to-aider.md](cursor-to-aider.md) |
+| Cursor | Codex | [cursor-to-codex.md](cursor-to-codex.md) |
 | Codex | Claude Code | [codex-to-claude-code.md](codex-to-claude-code.md) |
+| Codex | Cursor | [codex-to-cursor.md](codex-to-cursor.md) |
+| Aider | Claude Code | [aider-to-claude-code.md](aider-to-claude-code.md) |
 
 Each recipe documents:
 
@@ -36,14 +39,14 @@ Each recipe documents:
 
 ## What each tool's "harness" includes
 
-| Component | Claude Code | Cursor | Codex |
-|---|---|---|---|
-| Identity prompt | `~/.claude/CLAUDE.md` | `.cursorrules` + user rules | `~/.codex/config.md` |
-| Subagents | `agents/*.md` | `.cursor/rules/*.mdc` | (no equivalent) |
-| Skills | `skills/<slug>/SKILL.md` | `.cursor/rules/skill-*.mdc` | `~/.codex/skills/` |
-| Memory | `projects/-/memory/*.md` | (no equivalent) | (no equivalent) |
-| Hooks | `hooks/*.py` | (no equivalent) | (no equivalent) |
-| MCP config | `settings.json > mcpServers` | `.cursor/mcp.json` | `~/.codex/mcp.toml` |
+| Component | Claude Code | Cursor | Codex | Aider |
+|---|---|---|---|---|
+| Identity prompt | `~/.claude/CLAUDE.md` | `.cursorrules` + user rules | `~/.codex/config.md` | `CONVENTIONS.md` + `~/.aider.conf.yml` |
+| Subagents | `agents/*.md` | `.cursor/rules/*.mdc` | (no equivalent) | (no equivalent — always-on in CONVENTIONS.md) |
+| Skills | `skills/<slug>/SKILL.md` | `.cursor/rules/skill-*.mdc` | `~/.codex/skills/` | (sections in CONVENTIONS.md) |
+| Memory | `projects/-/memory/*.md` | (no equivalent) | (no equivalent) | (no equivalent) |
+| Hooks | `hooks/*.py` | (no equivalent) | (no equivalent) | (no equivalent) |
+| MCP config | `settings.json > mcpServers` | `.cursor/mcp.json` | `~/.codex/mcp.toml` | `~/.aider.conf.yml` (≥v0.75) |
 
 The "no equivalent" cells are where you lose something on the way out.
 The recipes call those out explicitly so you can plan around them.
