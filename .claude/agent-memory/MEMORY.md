@@ -1,0 +1,1 @@
+- [Market Researcher Expertise](market-researcher/expertise.md) — Awesome list gatekeeping patterns, AI harness migration space research, submission success rates, anti-patterns (archived/LLM-blocking lists)
