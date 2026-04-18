@@ -1,8 +1,8 @@
 # How to migrate your Codex agent to Claude Code
 
-**TL;DR** — Codex uses `~/.codex/` with `AGENTS.md` + `config.toml`. Claude Code uses `~/.claude/` with `CLAUDE.md` + `settings.json`. Skills are identical (same format, different path), but Codex's TOML config and missing hooks make the reverse migration slightly different from Claude Code → Codex.
+**TL;DR** — Codex uses `~/.codex/` with `AGENTS.md` + `config.toml`. Claude Code uses `~/.claude/` with `CLAUDE.md` + `settings.json` + hooks + memory. The good news: skills port directly, MCP config is simpler. The bad news: Codex doesn't have hooks or persistent memory, so you're gaining infrastructure you need to populate.
 
-Below is the manual recipe for migrating Codex → Claude Code, including file layouts, field-by-field mappings, and gotchas.
+Below is the manual recipe for migrating Codex → Claude Code, including file layouts, field-by-field mappings, and the things that break if you copy-paste. At the end I link to a one-command tool that does this automatically.
 
 ---
 
@@ -15,13 +15,13 @@ Below is the manual recipe for migrating Codex → Claude Code, including file l
 ├── AGENTS.md                     # identity + top-level preferences
 ├── config.toml                   # structured config (MCP, model, features)
 ├── agents/
-│   └── <agent-name>.md           # subagent rules (optional)
+│   └── <agent-name>.md           # frontmatter + agent prompt
 ├── skills/
-│   └── <skill-name>/SKILL.md     # skill definitions
-└── hooks.json                    # optional experimental hooks
+│   └── <skill-name>/SKILL.md     # identical format to Claude Code
+└── hooks.json                    # optional hook config (limited, experimental)
 
 $REPO_ROOT/
-├── AGENTS.md                     # project-level rules (optional)
+├── AGENTS.md                     # project-level rules (optional override)
 └── .agents/skills/               # project-level skills (optional)
 ```
 
@@ -29,23 +29,27 @@ $REPO_ROOT/
 
 ```
 ~/.claude/
-├── CLAUDE.md                     # identity + top-level preferences (renamed from AGENTS.md)
-├── settings.json                 # structured config (MCP, permissions, hooks)
+├── CLAUDE.md                     # identity + top-level preferences
+├── settings.json                 # permissions, hooks, MCP config
 ├── agents/
-│   └── <agent-name>.md           # subagent rules with Claude-specific frontmatter
+│   └── <agent-name>.md           # frontmatter + subagent prompt
 ├── skills/
-│   └── <skill-name>/SKILL.md     # identical to Codex (same format)
-├── hooks/*.py                    # lifecycle hook scripts (Codex has no equivalent)
-└── projects/-/memory/*.md        # persistent memory files (optional)
+│   └── <skill-name>/SKILL.md     # identical format to Codex
+├── hooks/*.py                    # lifecycle hook scripts
+└── projects/-/memory/*.md        # persistent memory files
 ```
 
-Key differences:
+Four structural differences:
 
-1. **Rules file renamed.** Codex uses `AGENTS.md`, Claude Code uses `CLAUDE.md`.
-2. **Config format.** Codex: `config.toml` (TOML). Claude Code: `settings.json` (JSON).
-3. **Agents need extra metadata.** Codex agents are minimal; Claude Code agents require additional frontmatter (`tools`, `model` scoping).
-4. **Skills path.** Codex: `~/.agents/skills/`. Claude Code: `~/.claude/skills/`.
-5. **Hooks.** Codex has no real hook system; Claude Code has 17 lifecycle hooks. You gain this capability on the Claude Code side.
+1. **Rules files are named differently.** Codex uses `AGENTS.md`, Claude Code uses `CLAUDE.md`. They're semantically identical (both Markdown, both global/project-layered), just named differently per the Linux Foundation Agentic AI standard vs. Claude Code's established convention.
+
+2. **Config format changed.** Codex's `config.toml` (TOML) becomes Claude Code's `settings.json` (JSON). This includes all MCP server configs, model selection, and permission scopes.
+
+3. **Skills paths unchanged.** Both use `<tool>/skills/`. The `SKILL.md` format itself is identical.
+
+4. **Gaining hooks system.** Claude Code has 17 lifecycle events (SessionStart, PreToolUse, StopHook, etc.). Codex's experimental `hooks.json` doesn't map to these. You're migrating TO hooks, so plan what you want to automate.
+
+5. **Gaining memory system.** Claude Code has per-project persistent memory. Codex has none. You'll need to populate `~/.claude/projects/-/memory/` files with learnings from your Codex work.
 
 ---
 
@@ -53,31 +57,24 @@ Key differences:
 
 ### `AGENTS.md` → `CLAUDE.md`
 
-The rules file is a straight rename — both are Markdown with identical semantics.
-
-**Action:** Copy `~/.codex/AGENTS.md` to `~/.claude/CLAUDE.md`. Replace any Codex-specific references with Claude Code equivalents:
+The rules file is a straight rename with no format changes — both are Markdown. But watch for Codex-specific fields that Claude Code doesn't recognize:
 
 | Codex section | Claude Code equivalent | Notes |
 |---|---|---|
-| `## Operating principles` | `## How I Operate` | Rephrase if needed |
-| `## Working agreements` | `## Golden Rules` | Same intent, different structure |
-| `## Core model` config note | `## Model Tier Usage` (table or section) | Claude Code uses structured sections |
-| References to `~/.codex/` | Change to `~/.claude/` | Update paths |
-| References to `~/.agents/skills/` | Change to `~/.claude/skills/` | Skills path differs |
+| `## Operating principles` | `## How I Operate` | Same idea, may need reword |
+| `## Working agreements` | `## Golden Rules` | Same intent, different section name |
+| Tool names (e.g., `Bash` tool) | Same tool names | Claude Code tool names are identical |
+| References to `~/.codex/` or `~/.agents/` paths | Change to `~/.claude/` | Update any hardcoded paths |
+| References to Codex-specific features (experimental hooks) | Replace with Claude Code equivalents | Hooks are native; add new ones for Codex workflows |
+| Model references to GPT | Update to Claude models | Claude Code supports `claude-opus-4-7`, `claude-sonnet-4-6`, `claude-haiku-4-5` |
 
-Also add Claude Code-specific sections that don't exist in Codex:
+**Action:** Copy `~/.codex/AGENTS.md` to `~/.claude/CLAUDE.md`, do a find-and-replace for `~/.codex/` → `~/.claude/`, and update any OpenAI model references to Claude models. Add a new `## Session Persistence` or `## Memory` section documenting what you want to remember between sessions.
 
-- `## Autonomy & Escalation` — decision rules for when to ask vs. execute
-- `## Agents` — specialist registry with dispatching criteria
-- `## Work in Progress` — optional but useful for tracking blockers
+For project-level overrides, also create `$REPO_ROOT/.claude/CLAUDE.md` if your Codex setup had `$REPO_ROOT/AGENTS.md`.
 
-For project-level overrides, also create `$REPO_ROOT/CLAUDE.md` with the same content if you're working in a single project.
+### `agents/<name>.md` → Claude Code agents
 
-### Codex `agents/<name>.md` → Claude Code `agents/<name>.md`
-
-Both tools support subagents, but Claude Code's frontmatter is richer.
-
-Codex agent:
+Codex agents:
 
 ```markdown
 ---
@@ -89,60 +86,40 @@ model: claude-opus-4-7
 You review Go code. First, read...
 ```
 
-Claude Code agent:
+Claude Code subagents:
 
 ```markdown
 ---
 name: code-reviewer
 description: Reviews Go code for correctness
 tools: Read, Grep, Glob, Bash
-model: sonnet
+model: claude-opus-4-7
 ---
 
 You review Go code. First, read...
 ```
+
+The main addition: Claude Code lets you scope tool access per agent. If your code-reviewer should only have read-only access, you can restrict it.
+
+**Migration path:** Copy each file from `~/.codex/agents/` to `~/.claude/agents/`. Add a `tools:` field to the frontmatter with the tools that agent needs:
 
 | Codex field | Claude Code equivalent | Notes |
 |---|---|---|
 | `name` | `name` | Same |
 | `description` | `description` | Same |
-| `model` | `model` | Same; update to Claude Code model names (opus, sonnet, haiku) |
-| — | `tools` | NEW field; Claude Code scopes tools per agent. List the tools this agent can use. |
+| `model` | `model` | Same; if using GPT, switch to Claude |
+| — | `tools` | NEW: specify which tools this agent can access |
 
-**Action:** For each agent in `~/.codex/agents/`, create `~/.claude/agents/<same-name>.md` with:
-1. Copy the frontmatter
-2. Add a `tools:` field with the tools this agent needs (e.g., `Read, Grep, Bash`)
-3. Update `model:` to Claude Code names (if `gpt-5.4` → `opus`, if `gpt-4` → `sonnet`)
-4. Keep the body text as-is
+**Best practice:** For each agent, think about what it actually needs:
+- Read-only research agent? `tools: Read, Glob, WebFetch`
+- Code reviewer? `tools: Read, Grep, Glob, Bash`
+- Full access orchestrator? `tools: *` (implicit)
 
-Example conversion:
-
-**Codex source:**
-```markdown
----
-name: discovery
-description: Pre-implementation code scoping
-model: claude-opus-4-7
----
-
-You explore unfamiliar codebases...
-```
-
-**Claude Code target:**
-```markdown
----
-name: discovery
-description: Pre-implementation code scoping
-tools: Read, Grep, Glob, Bash
-model: opus
----
-
-You explore unfamiliar codebases...
-```
+This is a security and focus win you get by moving to Claude Code.
 
 ### `skills/<slug>/SKILL.md` → `~/.claude/skills/<slug>/SKILL.md`
 
-**This is the cleanest migration — no format change needed.**
+This is the cleanest migration — skills are format-identical.
 
 Codex:
 ```
@@ -156,134 +133,145 @@ Claude Code:
 └── simplify/SKILL.md
 ```
 
-Just copy the files:
+The file format is identical — YAML frontmatter + Markdown body. Just move the files:
 
 ```bash
-mkdir -p ~/.claude/skills
 cp -r ~/.agents/skills/* ~/.claude/skills/
 ```
 
-The SKILL.md format is identical in both tools.
+The only gotcha: if your skills have asset files (templates, scripts, etc.), verify they moved with the directory. Claude Code treats the skill directory the same way Codex does.
 
 ### `config.toml` → `settings.json`
 
 Codex config (config.toml):
 
 ```toml
-[core]
-model = "claude-opus-4-7"
-
 [mcpServers.firecrawl]
 type = "stdio"
 command = "node"
 args = ["/path/to/firecrawl-mcp.js"]
+
+[core]
+model = "claude-opus-4-7"
 ```
 
 Claude Code config (settings.json):
 
 ```json
 {
-  "defaultModel": "opus-4-7",
   "mcpServers": {
     "firecrawl": {
       "command": "node",
       "args": ["/path/to/firecrawl-mcp.js"]
     }
   },
-  "permissions": {
-    "read": true,
-    "bash": true,
-    "bash-dangerous-commands": false
+  "model": "claude-opus-4-7"
+}
+```
+
+Key differences:
+
+| Codex (config.toml) | Claude Code (settings.json) | Notes |
+|---|---|---|
+| `[mcpServers.<name>]` TOML sections | `"mcpServers": { "<name>": {...} }` JSON | Codex adds `type` field; Claude Code doesn't need it |
+| (No equivalent) | `"tools": {...}` | Claude Code can scope tool permissions globally |
+| (No equivalent) | `"permissions": {...}` | Claude Code has permission scoping per environment |
+| `[core]` model field | `"model"` at root | Different structure, same meaning |
+
+**Action:** Convert `config.toml` to JSON. For MCP servers, extract each `[mcpServers.<name>]` section and convert to the JSON object format. Strip the `type` field (Claude Code doesn't need it).
+
+Example conversion:
+
+**Codex input:**
+```toml
+[mcpServers.firecrawl]
+type = "stdio"
+command = "node"
+args = ["/path/to/firecrawl-mcp.js"]
+```
+
+**Claude Code output:**
+```json
+{
+  "mcpServers": {
+    "firecrawl": {
+      "command": "node",
+      "args": ["/path/to/firecrawl-mcp.js"]
+    }
   }
 }
 ```
 
-| Codex (config.toml) | Claude Code (settings.json) | Notes |
+### `hooks.json` (Codex) → `hooks/*.py` (Claude Code)
+
+Codex's experimental `hooks.json` is coarse and doesn't map to Claude Code's 17 lifecycle events. You're migrating TO hooks, so document what you want to automate:
+
+| Lifecycle event | Use case | Example |
 |---|---|---|
-| `[core]` model | `defaultModel` | Same purpose; different location |
-| `[mcpServers.<name>]` | `mcpServers.<name>` | Same structure, JSON format instead of TOML |
-| `[mcpServers.*.type]` | (Not needed) | Claude Code infers from config structure |
-| `[approvals].*` | `permissions.*` | Similar concept, different structure |
-| — | `hooks` | NEW; list hook event paths for Claude Code lifecycle events |
+| `SessionStart` | Load memory, verify environment | Read user context files, check tool paths |
+| `PreToolUse` | Validate before running tools | Enforce no `rm -rf`, check spend limits |
+| `StopHook` | Run on session end | Save memory, run tests, commit changes |
+| `UserPromptSubmit` | Process user input before responding | Inject context, validate requests |
 
-**Action:**
+**Action:** Don't port Codex's `hooks.json`. Instead:
 
-1. Convert `config.toml` to JSON:
-   ```bash
-   cat ~/.codex/config.toml | toml-to-json > /tmp/config.json
-   ```
-   (If you don't have `toml-to-json`, manually convert key-value pairs.)
+1. Document what automation you relied on (if any).
+2. Write new Python hook scripts in `~/.claude/hooks/` for the critical automations.
+3. Check the [Claude Code hooks reference](https://claude.com/docs/claude-code/hooks) for exact lifecycle events and signatures.
 
-2. Restructure for Claude Code:
-   - Copy MCP server definitions as-is (drop the `type` field)
-   - Copy or set `defaultModel`
-   - Add `permissions` object with `read`, `bash`, etc. as needed
-   - Remove Codex-specific fields (e.g., `[features]`, `[core]` except model)
+Example: If you had a workflow that always ran tests on session end, write:
 
-3. Example `settings.json`:
-   ```json
-   {
-     "defaultModel": "opus-4-7",
-     "mcpServers": {
-       "firecrawl": {
-         "command": "node",
-         "args": ["/path/to/firecrawl-mcp.js"]
-       }
-     },
-     "permissions": {
-       "read": true,
-       "bash": true
-     }
-   }
-   ```
-
-### `hooks.json` → `hooks/*.py`
-
-Codex has an experimental `hooks.json` with limited functionality. Claude Code's hook system is mature with 17 events (SessionStart, PreToolUse, StopHook, PostToolUse, etc.).
-
-**Action:**
-
-1. Document what Codex's `hooks.json` did (if anything).
-2. For critical hook logic, implement equivalent Claude Code hooks:
-   - **SessionStart:** Initialize state, load secrets, set up logging
-   - **PreToolUse:** Validate tool invocation (e.g., prevent destructive operations)
-   - **StopHook:** Cleanup, summarize, enforce completion criteria
-   - **PostToolUse:** Validate tool results, trigger side effects
-
-3. Place hook scripts in `~/.claude/hooks/` with naming like `session_start.py`, `pre_tool_use.py`, etc.
-
-Codex doesn't have a hook system, so you're not losing anything — you're gaining the capability.
+```python
+# ~/.claude/hooks/stop_hook.py
+def run(context):
+    # Run tests on session end
+    os.system("cd $PROJECT_ROOT && npm test")
+    return True
+```
 
 ---
 
 ## Things that will silently break
 
-1. **`~/.agents/` vs `~/.claude/`.** Make sure all hardcoded paths in `AGENTS.md` are updated to `~/.claude/`.
+1. **Codex-specific tool names.** While Claude Code and Codex share most tool names, some differ. Check your agent prompts for references to tools that might have different names in Claude Code.
 
-2. **TOML vs JSON config.** If your `config.toml` has complex TOML syntax (arrays, nested tables), manual conversion to JSON is error-prone. Use a TOML-to-JSON converter or `codex config export` if available.
+2. **Model name differences.** Codex defaults to GPT-5.4. If you wrote "use GPT-5," Claude Code won't know what that is. Update all model references to Claude models: `claude-opus-4-7`, `claude-sonnet-4-6`, `claude-haiku-4-5`.
 
-3. **Model name mismatch.** Codex uses full model names (e.g., `claude-opus-4-7`); Claude Code uses shorthand (e.g., `opus`). Update your AGENTS.md → CLAUDE.md during migration.
+3. **Missing memory files.** Codex doesn't have persistent memory, so you're starting with an empty `~/.claude/projects/-/memory/` directory. If you had learnings or project context in Codex, write them out to memory files.
 
-4. **Agent tool scoping.** Claude Code agents can be restricted to specific tools (e.g., a code-reviewer with only read-only tools). If your Codex agents relied on full tool access, add the `tools:` field to Claude Code agents.
+4. **Hooks are now powerful.** Claude Code hooks can block or modify execution. If you write a hook incorrectly, it might prevent tools from running. Test new hooks in a sandbox first.
 
-5. **Missing memory system.** Codex doesn't have persistent memory. If you stored important config in Codex as `AGENTS.md` notes, manually promote those to `~/.claude/projects/-/memory/` files when you move to Claude Code.
+5. **Per-agent tool scoping is now possible.** Claude Code lets you restrict tools per agent. If you don't specify `tools:`, agents default to full access. Think about what each agent actually needs.
 
-6. **`AGENTS.override.md` precedence.** Codex supports override files for project-specific rules. Claude Code uses `$REPO_ROOT/CLAUDE.md` for the same purpose — name it `CLAUDE.md`, not `CLAUDE.override.md`.
+6. **Project-level rules are optional.** Claude Code supports `.claude/CLAUDE.md` at the project root, but it's optional. Codex's `$REPO_ROOT/AGENTS.md` is the same — migrate it if you have one, but it's not required.
 
 ---
 
 ## Doing this by hand
 
-1. `cp ~/.codex/AGENTS.md ~/.claude/CLAUDE.md`. Update paths and section names per the mapping table above.
-2. `mkdir -p ~/.claude/agents/`; for each file in `~/.codex/agents/`, create `~/.claude/agents/<name>.md` with added `tools:` field.
-3. `mkdir -p ~/.claude/skills/`; `cp -r ~/.agents/skills/* ~/.claude/skills/`.
-4. Convert `~/.codex/config.toml` to JSON → `~/.claude/settings.json`. Test with `cat ~/.claude/settings.json | jq .` to verify JSON syntax.
-5. Add MCP servers to `settings.json` under `mcpServers`. Remove the `type` field from each.
-6. Create hook scripts in `~/.claude/hooks/` if you have critical automation. Start with a simple `session_start.py` to verify the hook system works.
-7. Create a `~/.claude/projects/-/memory/MEMORY.md` index (optional but recommended).
-8. Test: run `claude --version`. Try `claude prompt` with a simple task. Verify agents show up via `ls ~/.claude/agents/`.
+1. `cp ~/.codex/AGENTS.md ~/.claude/CLAUDE.md`. Do a find-and-replace for `~/.codex/` → `~/.claude/` and `~/.agents/` → `~/.claude/`. Update all GPT model references to Claude models.
 
-Figure 20-40 minutes if you have a non-trivial setup.
+2. Add a new `## Session Persistence` section to `CLAUDE.md` with notes on what you want to remember between sessions.
+
+3. `mkdir -p ~/.claude/skills && cp -r ~/.agents/skills/* ~/.claude/skills/`.
+
+4. For each file in `~/.codex/agents/`: create `~/.claude/agents/<name>.md` with the same content. Add a `tools:` field to each agent's frontmatter (e.g., `tools: Read, Grep, Glob, Bash`).
+
+5. Convert `~/.codex/config.toml` → `~/.claude/settings.json`. Parse the TOML file, extract MCP server configs, and write as JSON. Strip `type` fields.
+
+6. Create memory files for load-bearing learnings. Examples:
+   - `~/.claude/projects/-memory/project_codex_migration.md` — notes on what you're bringing over
+   - `~/.claude/projects/-memory/tool_patterns.md` — common tool usage patterns you discovered in Codex
+
+7. Create hook scripts for critical automations:
+   - `~/.claude/hooks/session_start.py` — initialize environment
+   - `~/.claude/hooks/stop_hook.py` — save memory, run tests, etc.
+
+   Check [Claude Code hooks reference](https://claude.com/docs/claude-code/hooks) for function signatures.
+
+8. Run `claude code` to verify setup. Test a simple task to confirm tools and agents work.
+
+Figure 30-45 minutes if you have a non-trivial Codex setup with multiple agents and MCP servers.
 
 ---
 
@@ -295,7 +283,7 @@ Figure 20-40 minutes if you have a non-trivial setup.
 npx portable migrate --from codex --to claude-code
 ```
 
-It reads `~/.codex/`, maps everything to Claude Code's layout, converts TOML → JSON, adds tool scoping to agents, scrubs PII, and emits the file tree. You review everything before it's applied — nothing auto-writes without your OK.
+It reads `~/.codex/`, maps everything to Claude Code's layout, converts TOML config to JSON, validates MCP servers, generates stub memory files, and signs the bundle with ed25519. You review everything before it's applied — nothing auto-writes without your OK.
 
 Launch pricing: first 10 buyers at $19 lifetime, next 10 at $29, then $49 (rising as traction grows). One payment, every current feature + every future tool in the Foundry Practitioner Toolkit.
 
@@ -305,4 +293,4 @@ Launch pricing: first 10 buyers at $19 lifetime, next 10 at $29, then $49 (risin
 
 ## Footnote — why this exists
 
-Codex pioneered the AGENTS.md standard, which is now the Linux Foundation baseline for agentic AI. Migration *to* Codex is straightforward because it's simpler than Claude Code. Migration *from* Codex gains Claude Code's richness (hooks, memory, tool scoping) — this is where you get more capability, not less.
+Claude Code is a mature AI agent harness with hooks, memory, and per-agent tool scoping. Codex is a solid open-source CLI with native MCP support. Both use the AGENTS.md standard (now backed by the Linux Foundation). Migrating between them is straightforward — the real gains on moving to Claude Code are hooks (automation) and memory (learning), which Codex doesn't have.

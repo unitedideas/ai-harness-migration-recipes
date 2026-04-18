@@ -19,9 +19,10 @@ things that will bite you if you copy-paste.
 | From | To | Recipe |
 |---|---|---|
 | Claude Code | Cursor | [claude-code-to-cursor.md](claude-code-to-cursor.md) |
-| Cursor | Claude Code | [cursor-to-claude-code.md](cursor-to-claude-code.md) |
 | Claude Code | Aider | [claude-code-to-aider.md](claude-code-to-aider.md) |
 | Claude Code | Codex | [claude-code-to-codex.md](claude-code-to-codex.md) |
+| Cursor | Claude Code | [cursor-to-claude-code.md](cursor-to-claude-code.md) |
+| Cursor | Aider | [cursor-to-aider.md](cursor-to-aider.md) |
 | Codex | Claude Code | [codex-to-claude-code.md](codex-to-claude-code.md) |
 
 Each recipe documents:
