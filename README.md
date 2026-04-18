@@ -1,5 +1,10 @@
 # AI harness migration recipes
 
+[![GitHub release](https://img.shields.io/github/v/release/unitedideas/ai-harness-migration-recipes?label=version)](https://github.com/unitedideas/ai-harness-migration-recipes/releases)
+[![License](https://img.shields.io/badge/license-CC%20BY%204.0-blue)](LICENSE.md)
+![Recipes](https://img.shields.io/badge/recipes-12%2F12-brightgreen)
+![Verified](https://img.shields.io/badge/verified-hand--tested-success)
+
 Hand-written, file-by-file mappings for moving an AI coding agent's
 configuration ("harness") between tools.
 
