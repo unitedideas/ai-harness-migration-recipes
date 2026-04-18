@@ -23,21 +23,21 @@ LISTS = {
     "awesome-cli-apps": {
         "upstream_repo": "sindresorhus/awesome-cli-apps",
         "readme_file": "readme.md",
-        "section_name": "Tools",
+        "section_name": "Agents",
         "pr_title": "Add: AI Harness Migration Recipes",
         "pr_body": "Adds hand-written migrations for AI coding agent config between Claude Code, Cursor, Codex, Aider. All 12 pairs, tested, CC BY 4.0.",
     },
     "awesome-developer-tools": {
         "upstream_repo": "imteekay/awesome-developer-tools",
         "readme_file": "README.md",
-        "section_name": "Development",
+        "section_name": "AI & ML",
         "pr_title": "Add: AI Harness Migration Recipes (Agent Config Tool)",
         "pr_body": "Adds comprehensive migration guides for developers switching AI coding agents. Covers Claude Code, Cursor, Codex, Aider. All 12 pairs tested.",
     },
-    "awesome-ai": {
+    "awesome": {
         "upstream_repo": "sindresorhus/awesome",
         "readme_file": "README.md",
-        "section_name": "Development",
+        "section_name": "Assistants",
         "pr_title": "Add: AI Harness Migration Recipes",
         "pr_body": "Adds resource for developers switching between AI coding tools. All major agents covered (Claude Code, Cursor, Codex, Aider). CC BY 4.0.",
     },
