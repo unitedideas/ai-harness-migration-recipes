@@ -48,6 +48,7 @@ def validate_recipe(from_tool, to_tool):
     with open(filepath) as f:
         content = f.read()
 
+    # Check required sections
     missing = []
     for section in REQUIRED_SECTIONS:
         if section not in content:
@@ -55,6 +56,16 @@ def validate_recipe(from_tool, to_tool):
 
     if missing:
         return False, f"⚠️  {filename}: missing sections: {', '.join(missing)}"
+
+    # Check for at least one pitfall section
+    has_pitfalls = any(section in content for section in PITFALL_SECTIONS)
+    if not has_pitfalls:
+        return False, f"⚠️  {filename}: missing pitfalls/breakage section"
+
+    # Check for at least one checklist section
+    has_checklist = any(section in content for section in CHECKLIST_SECTIONS)
+    if not has_checklist:
+        return False, f"⚠️  {filename}: missing checklist/steps section"
 
     return True, f"✅ {filename}"
 
