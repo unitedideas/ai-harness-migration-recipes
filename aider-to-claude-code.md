@@ -1,18 +1,16 @@
 # How to migrate your Aider agent to Claude Code
 
-**TL;DR** — Aider's flat, project-local configuration model is the opposite
-of Claude Code's structured global-plus-local hierarchy. Aider stores
-everything in one per-project `CONVENTIONS.md` plus a global `~/.aider.conf.yml`.
-Claude Code splits identity, agents, skills, memory, and hooks into discrete
-`~/.claude/` directories + a per-project `CLAUDE.md` override. Migration
-is mostly about **deconstructing** Aider's flat `CONVENTIONS.md` into Claude
-Code's modular pieces and gaining back subagent scoping and hook automation.
+**TL;DR** — Aider's flat configuration model is simpler than Claude Code's
+structured harness, so the reverse migration (Aider → Claude Code) is mostly
+about **expanding** Aider's single `CONVENTIONS.md` prompt into Claude Code's
+discrete layers: `CLAUDE.md`, agents, skills, and memory. You gain
+subagents, on-demand skills, hooks, and persistent memory — but you'll need
+to manually decompose Aider's monolithic prompt into these pieces.
 
-This is a **net gain** in the reverse direction: you're going from flat
-config to structured, gaining back tool-scoping, subagent dispatch, skill
-modularity, and automated hooks. The main loss is Aider's simplicity — you're
-moving from "one config file" to "a directory structure," but gaining
-expressiveness.
+This is a one-way trip in the sense that a round-trip (Aider → Claude Code
+→ Aider) loses fidelity the other way. Claude Code's subagent system,
+hooks, and persistent memory have no Aider equivalent. Below is what ports
+cleanly, what needs manual decomposition, and what you'll gain.
 
 ---
 
@@ -21,229 +19,266 @@ expressiveness.
 ### Aider (source)
 
 ```
-~/.aider.conf.yml                 # user-global: model, edit-format, MCP
+~/.aider.conf.yml                 # user-global: model, edit format, API keys
 <project-root>/
-├── .aider.conf.yml               # per-project overrides (rarely used)
-├── CONVENTIONS.md                # all project instructions + agent rules
-├── .aiderignore                  # context exclusions (gitignore syntax)
-└── .aider/                       # runtime cache (don't migrate)
-    ├── history                   # chat transcripts
-    └── repo.tags.cache.v4/       # symbol index
+├── .aider.conf.yml               # per-project config overrides
+├── CONVENTIONS.md                # project-scoped instructions (always-loaded)
+├── .aiderignore                  # gitignore-style exclusions
+└── .aider/                        # runtime cache — don't edit
+    ├── history
+    └── repo.tags.cache.v4/
 ```
 
 ### Claude Code (destination)
 
 ```
 ~/.claude/
-├── CLAUDE.md                     # user-global identity + preferences
-├── settings.json                 # permissions, hooks, MCP config
-├── agents/<name>.md              # modular subagent definitions
-├── skills/<slug>/SKILL.md        # modular skill definitions
-├── hooks/*.py                    # lifecycle hook scripts (new capability)
-├── projects/-/memory/<project>/*.md  # per-project memory
-└── keybindings.json              # optional: keybinding customization
+├── CLAUDE.md                      # identity + global preferences
+├── settings.json                  # tool permissions, hooks, MCP wiring
+├── agents/<name>.md               # subagent definitions
+├── skills/<slug>/SKILL.md         # reusable knowledge + assets
+├── hooks/*.py                     # lifecycle automation
+└── projects/-/memory/*.md         # persistent per-project memories
+<project-root>/
+├── CLAUDE.md                       # project-level overrides (optional)
+└── .claude/settings.json          # project-level permissions (optional)
 ```
 
-Key mental shift: **Claude Code loads `CONVENTIONS.md` equivalent as discrete
-pieces** — agents are invocable, skills are registered by slug, memory is
-auto-indexed and auto-loaded. You regain the ability to invoke a specific
-agent (`/agent code-reviewer`) instead of having it always-on.
+Key mental shift: **Claude Code separates global identity from project
+context** — your `~/.claude/CLAUDE.md` is persistent across repos, while
+project `CLAUDE.md` files layer on top. Aider merges everything into
+`CONVENTIONS.md`. Migration means **extracting and distributing** Aider's
+flat instructions into the right layer.
 
 ---
 
 ## Mapping each piece
 
-### `~/.aider.conf.yml` + `.aider.conf.yml` → `~/.claude/CLAUDE.md`
+### `~/.aider.conf.yml` → `~/.claude/CLAUDE.md` (+ per-project `CLAUDE.md`)
 
-Aider's config is purely **runtime settings** (model, edit format) plus
-**per-project conventions embedded in CONVENTIONS.md**. Claude Code separates
-them:
+Aider's config file has two sections: user-global + per-project.
 
-| Aider config                     | Claude Code destination          |
+| Aider setting                    | Claude Code destination          |
 |----------------------------------|----------------------------------|
-| `model:` (e.g., `claude-sonnet`) | `~/.claude/CLAUDE.md` (or per-session CLI) |
-| `edit-format:` (e.g., `diff`)    | **Not applicable** (Claude Code uses built-in diffs) |
-| `mcp-servers:` (if Aider ≥0.75)  | `~/.claude/settings.json` → `mcpServers` |
-| Project overrides (`.aider.conf.yml`) | Skip — use per-project CLAUDE.md overrides in Claude Code instead |
+| `model: anthropic/claude-sonnet` | `~/.claude/CLAUDE.md` → `Model Tier Usage` table |
+| `api-key:` (Anthropic/OpenAI)    | Environment: `ANTHROPIC_API_KEY` or `~/.anthropic-key` |
+| `edit-format: diff`              | `~/.claude/CLAUDE.md` → `## Autonomy & Escalation` |
+| Aider per-project overrides      | `<project-root>/CLAUDE.md` or `.claude/settings.json` |
 
-Put identity preferences and global voice/style directly in `~/.claude/CLAUDE.md`.
+Your `~/.claude/CLAUDE.md` should document:
+- Which Claude model you prefer by default (Opus for complex, Sonnet for
+  standard, Haiku for simple)
+- API key location
+- Global tool restrictions (e.g., "no direct Bash to production")
 
-### `CONVENTIONS.md` → `agents/` + `skills/` + `CLAUDE.md` sections
+Per-project `CLAUDE.md` can override for specific repos.
 
-Aider's `CONVENTIONS.md` is a catch-all. Claude Code lets you split it:
+### `CONVENTIONS.md` → `~/.claude/CLAUDE.md` + agents + skills + memory
 
-**Always-on instructions** (identity, voice, patterns) → inline into `~/.claude/CLAUDE.md` as "Global rules" section.
+This is where the real work is. Aider's `CONVENTIONS.md` is a **single
+prompt** that gets loaded into every chat. Claude Code distributes the
+same instructions across multiple layers:
 
-**Agent-like rules** (e.g., "always use error handling X", "code reviewer checklist") → create `agents/<name>.md` with frontmatter:
+1. **Global voice + identity** → `~/.claude/CLAUDE.md` section
+   (e.g., "I'm a senior Go engineer…")
 
-```yaml
----
-description: Code review agent for this project
-tools: Read, Grep, Glob, Bash  # scoped tools if read-only agent
-model: claude-opus-4-7  # optional override
----
-## Code Review Checklist
-- Check error handling on all IO operations
-- Verify test coverage on new functions
-- Flag any type assertions without guards
+2. **Always-relevant patterns** → `~/.claude/agents/enforcement.md`
+   - Example: error-handling rules, naming conventions, test structure
+   - Reason: subagents can be explicitly invoked or always-on via hooks
+
+3. **Occasional / on-demand patterns** → `~/.claude/skills/<slug>/SKILL.md`
+   - Example: "how to debug the async race condition", "database migration
+     checklist"
+   - Reason: skills are indexed by the harness; you invoke them by name
+     rather than always loading them
+
+4. **Project-specific gotchas** → `~/.claude/projects/-/memory/<name>.md`
+   - Example: "this codebase has a 15-year legacy code path that uses X"
+   - Reason: memories persist across sessions; future-you will read them
+
+**Practical strategy:**
+- Split `CONVENTIONS.md` into sections
+- Identity + voice → global `CLAUDE.md`
+- Architecture rules → per-project `CLAUDE.md` or new agent file
+- Checklists (test checklist, deploy checklist) → agents
+- Reusable tricks / how-tos → skills
+- "Remember that…" → memory files
+
+### `.aiderignore` → `.claude/settings.json` + project `CLAUDE.md`
+
+Aider's `.aiderignore` excludes files from the symbol index (so they don't
+bloat context). Claude Code has similar exclusions:
+
+| Aider                            | Claude Code                          |
+|----------------------------------|--------------------------------------|
+| `.aiderignore` patterns          | `.claude/settings.json` → `exclude` array |
+|                                  | Or: document in project `CLAUDE.md` |
+
+Create `.claude/settings.json` in the project root:
+
+```json
+{
+  "exclude": [
+    "node_modules/**",
+    "*.min.js",
+    "build/",
+    "dist/"
+  ]
+}
 ```
 
-Then invoke with `/agent code-reviewer` or spawn as subagent with `Agent()` tool.
+Alternatively, document the exclusion reasoning in project `CLAUDE.md` and
+rely on `.gitignore` (Claude Code respects `.gitignore` by default).
 
-**Skill-like procedures** (e.g., "our test-running pattern", "migration procedure") → create `skills/<slug>/SKILL.md`:
+### MCP servers
 
+Both tools support MCP servers (Aider ≥0.75).
+
+| Aider                            | Claude Code                      |
+|----------------------------------|----------------------------------|
+| `~/.aider.conf.yml` → `mcp-servers:` | `~/.claude/settings.json` → `mcpServers` |
+
+Copy your MCP server config directly; the JSON schema is equivalent.
+
+### Model selection
+
+**Aider:** One global model per user (`~/.aider.conf.yml`).
 ```yaml
----
-slug: test-migration-pattern
-description: The four-step pattern for database migrations
----
-## Four-Step Migration Pattern
-1. Write reversible migration ...
-2. Test both directions ...
+model: anthropic/claude-sonnet-4-6
 ```
 
-Then reference in prompts with `/skill test-migration-pattern` or load inline where needed.
+**Claude Code:** Per-session or per-agent choice.
+```
+/fast              # uses Claude Opus 4.7 for this session
+/model sonnet      # switch to Sonnet for remaining turns
+```
 
-**Project-specific overrides** → create `.claude/CLAUDE.md` in the project root (if you use per-project overrides). Claude Code reads `CLAUDE.md` at the repo root as overrides to `~/.claude/CLAUDE.md`.
-
-### `.aiderignore` → `~/.claude/settings.json` exclusions
-
-Aider's `.aiderignore` controls what files Aider indexes for its symbol cache.
-Claude Code doesn't have an equivalent exclusion file, but:
-
-- **For general glob patterns** (node_modules, dist, .git): rely on Claude Code's
-  default `.gitignore` integration — Claude Code already excludes these.
-- **For tool-level restrictions**: document exclusions in `~/.claude/settings.json`
-  under `allowedPaths` or tool-specific rules if you use the permissions system.
-
-Most `.aiderignore` patterns won't need to migrate — Claude Code's context
-management is different.
-
-### Runtime cache (`.aider/history`, `.aider/repo.tags.cache.v4/`)
-
-**Don't migrate.** These are Aider runtime artifacts. Claude Code doesn't use
-them and they're tool-specific. Delete them.
+Your `~/.claude/CLAUDE.md` should document your default model choice and
+when to override (e.g., "Opus for architecture, Sonnet for standard work").
 
 ---
 
 ## Things that will silently break
 
-1. **Always-on conventions.** In Aider, anything in `CONVENTIONS.md` is
-   prepended to every message. In Claude Code, you have to be explicit: either
-   inline into `CLAUDE.md` or dispatch to an agent. If you relied on a 100-line
-   convention being present in every turn, you now have to choose: keep it in
-   `CLAUDE.md` (always-on but verbose) or make it an `agents/<name>` that you
-   invoke when needed.
+1. **Always-loaded prompt discipline.** Aider auto-loads `CONVENTIONS.md`
+   into every turn. Claude Code does NOT auto-load `CLAUDE.md` into every
+   turn — it's a reference document. If you need instructions to be always
+   applied, wire them into a hook (`~/.claude/hooks/prompt_prepend.py`)
+   or keep them short and pin them in your mental model, not expecting
+   the tool to enforce them.
 
-2. **Model selection.** Aider's `model:` in `~/.aider.conf.yml` is global —
-   every session uses the same model. Claude Code lets you override per-agent
-   (`model:` frontmatter in `agents/<name>.md`) or per-session (CLI flag).
-   You're gaining flexibility but need to decide per-agent instead of globally.
+2. **No built-in `/commit` gating.** Aider shows diffs before `git commit`;
+   you approve manually. Claude Code has no equivalent (the human is always
+   the gate). Make sure you review diffs explicitly before committing.
 
-3. **MCP servers in old Aider versions.** If your Aider is <0.75, you had no
-   MCP support. After migration to Claude Code, you can use MCP — this is a
-   gain, not a loss.
+3. **Chat history expectations.** Aider stores full chat transcripts in
+   `.aider/history/` and loads them on context misses. Claude Code has no
+   automatic chat history loading — use project memory files to store
+   decisions that should persist across sessions.
 
-4. **Tool scoping.** Aider doesn't have tool scoping — the LLM sees the full
-   set of tools. Claude Code lets you declare `tools: Read, Grep, Glob` on
-   specific agents for read-only review flows. This is a **gain** on reverse
-   migration — you're not losing it, you're gaining the ability to scope tools
-   again if you want to.
+4. **Filesystem context assumptions.** Aider scans the whole repo and
+   builds a symbol index (`.aider/repo.tags.cache/`). Claude Code requires
+   explicit reads or globs. If your prompt assumed Aider could see the
+   whole codebase implicitly, rewrite it to explicitly specify which files
+   to read or check.
 
-5. **Git hook automation.** Aider has no hook system — you manually gate changes
-   via `/accept` before they're committed. Claude Code lets you define
-   `~/.claude/hooks/*.py` to run pre-commit, stop-on-failure, etc. This is a
-   **gain** — you regain automation, but only if you explicitly add hooks.
+5. **API key fallback.** Aider can use OpenAI's API without any Claude
+   Code setup — if you relied on `OPENAI_API_KEY`, you'll need to switch
+   to `ANTHROPIC_API_KEY` (Claude Code focuses on Anthropic models). If
+   you need multi-model support, use environment variables and inline
+   them.
 
-6. **Per-project config overrides.** Aider's `.aider.conf.yml` per-project is
-   rarely used. Claude Code's per-project `CLAUDE.md` is more standard and
-   works better — this is a sideways move, mostly a gain.
+6. **Slash command vocabulary.** Aider's `/web`, `/commit`, `/add`, `/drop`
+   don't have exact Claude Code equivalents. Document any custom workflows
+   you used in Aider and adapt them to Claude Code's slash commands
+   (`/plan`, `/help`, `/clear`, etc.) or shell aliases.
 
 ---
 
 ## Doing this by hand
 
-1. **Extract identity and voice from `CONVENTIONS.md`.**
-   - Copy the opening paragraphs, any "How I operate" sections, personality
-     notes into `~/.claude/CLAUDE.md`.
-   - Everything else in `CONVENTIONS.md` will be split next.
+1. **Read your `CONVENTIONS.md`.** Extract three groups:
+   - Identity + voice (who you are, how you speak)
+   - Always-relevant rules (style, architecture, testing)
+   - Occasional patterns (checklists, debugging techniques)
 
-2. **Create `~/.claude/CLAUDE.md` if it doesn't exist.**
-   - Paste identity, voice, and project-agnostic rules.
-   - Add a `## AI tools and environment` section with model preference (if you
-     had one in `~/.aider.conf.yml`).
-   - Add your coding standards and patterns.
+2. **Copy identity + voice to `~/.claude/CLAUDE.md`.**
+   Keep it terse. Aider's prose doesn't need to be repeated verbatim —
+   distill the essence.
 
-3. **Extract agents from `CONVENTIONS.md`.**
-   - Look for named sections or checklists (e.g., "Code Review", "Security
-     Audit", "Testing Checklist").
-   - Each becomes `~/.claude/agents/<lowercase-name>.md` with frontmatter:
-     ```yaml
-     ---
-     description: One-liner description
-     tools: Read, Grep, Glob, Bash  # optional: constrain if read-only agent
-     ---
-     ```
-   - Paste the checklist body into the file.
+3. **Create a project `CLAUDE.md`** (in the repo root).
+   This is where you put project-specific context (architecture, test
+   runner, deploy path, team conventions). Keep it short; future-you will
+   read this every time you work in the repo.
 
-4. **Extract skills from `CONVENTIONS.md`.**
-   - Look for procedure sections ("How we migrate databases", "Pattern for
-     writing tests").
-   - Each becomes `~/.claude/skills/<slug>/SKILL.md`:
-     ```yaml
-     ---
-     slug: db-migration-pattern
-     description: Reversible four-step pattern
-     ---
-     ```
+4. **Create agents for always-on rules.**
+   If `CONVENTIONS.md` had a "error handling checklist", make it
+   `~/.claude/agents/error-handling.md`. You can wire it into a hook to
+   always be applied, or invoke it manually as `/agent error-handling`.
 
-5. **Create `.claude/CLAUDE.md` in your project root (optional).**
-   - If your Aider setup had project-specific rules, copy them here as
-     overrides. Claude Code reads this after `~/.claude/CLAUDE.md`.
+5. **Create skills for reusable techniques.**
+   If `CONVENTIONS.md` had a section "how to debug async deadlocks",
+   make `~/.claude/skills/async-debugging/SKILL.md` with the full
+   technique + code examples.
 
-6. **Port MCP servers from `~/.aider.conf.yml` to `~/.claude/settings.json`.**
-   - If you had `mcp-servers:` in Aider, convert to Claude Code's format:
-     ```json
-     {
-       "mcpServers": {
-         "server-name": {
-           "command": "...",
-           "args": [...]
-         }
-       }
-     }
-     ```
+6. **Promote load-bearing notes to memory.**
+   If you wrote down "this codebase has a legacy path in X.go that uses
+   outdated library Y", make `~/.claude/projects/-/memory/codebase-gotchas.md`.
 
-7. **Delete `.aider/` cache directory** — Claude Code doesn't use it.
+7. **Create `.claude/settings.json`** (project root).
+   Add any file exclusions from `.aiderignore`:
+   ```json
+   {
+     "exclude": ["node_modules/**", "*.min.js"]
+   }
+   ```
 
-8. **Optionally create hooks** for automation you previously relied on `/accept`
-   for. For example, a `pre-commit.py` hook to validate migrations before commit.
+8. **Port MCP servers** via `~/.claude/settings.json`.
+   Copy the `mcpServers` key from `~/.aider.conf.yml` → `mcp-servers`.
 
-9. **Test:** start a session with Claude Code, invoke an agent with `/agent
-   <name>`, verify the tool scoping and conventions carry through.
+9. **Test a simple prompt** in Claude Code.
+   Open the project, run `/help` to verify the harness is loaded, then
+   ask Claude Code to do a trivial task. Verify the agent has the right
+   context.
 
-Typical migration time: 30-60 minutes for a straightforward setup, more if
-you have many interwoven conventions to split into agents/skills.
+Expect 45-75 minutes for a non-trivial migration. More if `CONVENTIONS.md`
+was large and you're decomposing it into many agents + skills.
+
+---
+
+## What you're gaining
+
+Moving to Claude Code unlocks:
+
+- **Subagents:** Invoke specialists by name (e.g., `/agent code-reviewer`).
+  Useful for security reviews, architecture audits, on-demand expertise.
+- **Skills:** Index reusable knowledge. Reference by name, auto-discovered.
+- **Hooks:** Automate gates, validations, formatting. Fire at specific
+  lifecycle points (before commit, before push, on tool failure).
+- **Persistent memory:** `projects/-/memory/` auto-indexes across sessions.
+  Future-you reads these without asking.
+- **Multi-session context:** Claude Code's memory system bridges gaps Aider's
+  history can't fill — especially for decision rationales and lessons
+  learned.
 
 ---
 
 ## Doing this with one command
 
-[BringYour](https://bringyour.ai) does the mapping in one command:
+[BringYour](https://bringyour.ai) does the reverse mapping in one command:
 
-```bash
+```
 npx portable migrate --from aider --to claude-code
 ```
 
-It reads `CONVENTIONS.md` + `~/.aider.conf.yml`, auto-extracts agents
-and skills into modular files, generates `~/.claude/CLAUDE.md` with
-reasonable defaults, and bundles everything into the `~/.claude/`
-directory structure. You review the extractions before they're applied
-— nothing touches your disk without confirmation.
+It reads `CONVENTIONS.md` + project config, decomposes your Aider prompt
+into separate agents, skills, and memory files, and generates a `~/.claude/`
+structure with reasonable defaults. You review everything before it's
+applied — nothing touches your disk without confirmation.
 
-Launch pricing: first 10 buyers at **$19** lifetime, next 10 at
-**$29**, then **$49**. One-time payment, every future tool in the
-Foundry Practitioner Toolkit included free.
+Launch pricing: first 10 buyers at **$19** lifetime, next 10 at **$29**,
+then **$49**. One-time payment, every future tool in the Foundry
+Practitioner Toolkit included free.
 
 - [Buy a $19 slot →](https://bringyour.ai/buy)
 - [See how it works →](https://bringyour.ai/how-it-works)
