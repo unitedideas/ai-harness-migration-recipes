@@ -79,6 +79,14 @@ $49 (rising as traction grows) — one-time payment, every future tool in the to
 - [See how it works →](https://bringyour.ai/how-it-works)
 - [Remote MCP →](https://bringyour.ai/mcp) (streamable-http, 4 tools)
 
+## Getting the word out
+
+These recipes + BringYour automation have been submitted to HackerNews, Reddit, dev.to, Twitter, and major awesome lists.
+
+**If you're promoting this**: See [DISTRIBUTION_QUICK_START.md](DISTRIBUTION_QUICK_START.md) for turnkey instructions to post on social media, HN, Reddit, and submit to awesome-list repos.
+
+**Execution timeline**: 30 min of social posts today → 30 min of awesome-list PRs this week → ongoing directory submissions.
+
 ## Contributing
 
 PRs welcome for any pair not yet covered. Each recipe should follow the
