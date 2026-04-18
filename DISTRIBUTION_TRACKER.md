@@ -9,9 +9,11 @@ All 12 recipes complete. This tracker monitors submission status across distribu
 | dev.to article | ✓ Ready to publish | DISTRIBUTION_devto_article.md |
 | Twitter thread | ✓ Ready to post | DISTRIBUTION_twitter_thread.md |
 | HN post | ✓ Ready to submit | DISTRIBUTION_hn_post.md |
-| Reddit post (r/learnprogramming, r/coding, r/MachineLearning) | ✓ Ready to submit | DISTRIBUTION_reddit_post.md |
+| HN advanced angles | ✓ Ready to submit | DISTRIBUTION_hn_advanced.md |
+| Reddit posts | ✓ Ready to submit | DISTRIBUTION_reddit_posts.md |
 | LinkedIn article | ✓ Ready to post | DISTRIBUTION_linkedin_article.md |
 | Mastodon thread | ✓ Ready to post | DISTRIBUTION_mastodon_post.md |
+| **Case study** | **✓ Ready (NEW)** | **DISTRIBUTION_casestudy.md** |
 
 ## Distribution Channels
 
