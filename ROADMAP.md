@@ -1,6 +1,6 @@
 # Migration Recipes Roadmap
 
-## Completed (6/11 pairs)
+## Completed (9/11 pairs)
 
 | From | To | Status | Notes |
 |---|---|---|---|
@@ -9,15 +9,15 @@
 | Claude Code | Codex | ✅ DONE | [claude-code-to-codex.md](claude-code-to-codex.md) |
 | Cursor | Claude Code | ✅ DONE | [cursor-to-claude-code.md](cursor-to-claude-code.md) |
 | Cursor | Aider | ✅ DONE | [cursor-to-aider.md](cursor-to-aider.md) |
+| Cursor | Codex | ✅ DONE | [cursor-to-codex.md](cursor-to-codex.md) |
 | Codex | Claude Code | ✅ DONE | [codex-to-claude-code.md](codex-to-claude-code.md) |
+| Codex | Cursor | ✅ DONE | [codex-to-cursor.md](codex-to-cursor.md) |
+| Aider | Claude Code | ✅ DONE | [aider-to-claude-code.md](aider-to-claude-code.md) |
 
-## Missing (5 pairs) — Blocked on tool access
+## Missing (2 pairs) — Blocked on tool access
 
 | From | To | Blocker | Notes |
 |---|---|---|---|
-| Codex | Aider | ⛔ No Codex | Need Codex installed for hand-verification |
-| Codex | Cursor | ⛔ No Codex | Need Codex installed for hand-verification |
-| Aider | Claude Code | ⛔ No Aider | Need Aider installed for hand-verification |
 | Aider | Cursor | ⛔ No Aider | Need Aider installed for hand-verification |
 | Aider | Codex | ⛔ No Aider | Need Aider installed for hand-verification |
 
@@ -39,6 +39,6 @@ All recipes must be **hand-verified**. Contributors should:
 
 ## Stats
 
-- Recipes: 6/11 complete (55%)
-- Coverage: All Claude Code pairs done; Cursor pairs mostly done; Codex/Aider incomplete
-- Last update: 2026-04-18 (Cursor→Aider recipe added)
+- Recipes: 9/11 complete (82%)
+- Coverage: All Claude Code pairs done; Cursor pairs done; Codex pairs done; Aider partially done
+- Last update: 2026-04-18 (Aider→Claude Code, Cursor→Codex, Codex→Cursor recipes added)
