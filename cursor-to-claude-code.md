@@ -262,7 +262,7 @@ Claude Code destination (agent vs skill vs inline), scrubs PII, and emits
 the file tree for your review before writing.
 
 Launch pricing: first 10 buyers at **$19** lifetime, next 10 at **$29**,
-then $49 forever. One-time payment, every future tool in the Foundry
+then $49 (rising as traction grows). One-time payment, every future tool in the Foundry
 Practitioner Toolkit included free.
 
 - [Grab a $19 slot →](https://bringyour.ai/buy)

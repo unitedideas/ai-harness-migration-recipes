@@ -162,7 +162,7 @@ It reads `~/.claude/` (or the project copy), maps everything to Cursor's layout,
 
 It supports the same thing in reverse (Cursor → Claude Code), and across 10+ other tools (Codex, Aider, Continue, Cline, Goose, Zed, Roo Code, plus ChatGPT / Claude.ai paste interfaces and a Copilot write path). 
 
-Launch pricing: first 10 buyers at $19 lifetime, next 10 at $29, then $49 forever. One payment, every current feature + every future tool in the Foundry Practitioner Toolkit.
+Launch pricing: first 10 buyers at $19 lifetime, next 10 at $29, then $49 (rising as traction grows). One payment, every current feature + every future tool in the Foundry Practitioner Toolkit.
 
 [Grab a $19 slot →](https://bringyour.ai/buy) · [See how it works →](https://bringyour.ai/how-it-works)
 

@@ -60,7 +60,7 @@ npx portable migrate --from codex --to aider
 
 It supports 10 bidirectional targets plus a few write-only / paste targets.
 Launch pricing: first 10 at **$19** lifetime, next 10 at **$29**, then
-$49 forever — one-time payment, every future tool in the toolkit included.
+$49 (rising as traction grows) — one-time payment, every future tool in the toolkit included.
 
 - [Buy a slot →](https://bringyour.ai/buy)
 - [See how it works →](https://bringyour.ai/how-it-works)
