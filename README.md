@@ -4,7 +4,6 @@
 [![License](https://img.shields.io/badge/license-CC%20BY%204.0-blue)](LICENSE.md)
 ![Recipes](https://img.shields.io/badge/recipes-12%2F12-brightgreen)
 ![Verified](https://img.shields.io/badge/verified-hand--tested-success)
-[![awesome-mcp-servers](https://img.shields.io/badge/listed-awesome--mcp--servers-blue)](https://github.com/appcypher/awesome-mcp-servers)
 
 Hand-written, file-by-file mappings for moving an AI coding agent's
 configuration ("harness") between tools. **Migrate between Claude Code ↔ Cursor ↔ Codex ↔ Aider** without losing your system prompts, skills, or memory.
@@ -96,13 +95,17 @@ $49 (rising as traction grows) — one-time payment, every future tool in the to
 - [See how it works →](https://bringyour.ai/how-it-works)
 - [Remote MCP →](https://bringyour.ai/mcp) (streamable-http, 4 tools)
 
-## Getting the word out
+## Share This
 
-These recipes + BringYour automation have been submitted to HackerNews, Reddit, dev.to, Twitter, and major awesome lists.
+Found this useful? Help others discover it:
 
-**If you're promoting this**: See [DISTRIBUTION_QUICK_START.md](DISTRIBUTION_QUICK_START.md) for turnkey instructions to post on social media, HN, Reddit, and submit to awesome-list repos.
+- **HackerNews**: [Submit to HN](https://news.ycombinator.com/submit?url=https%3A%2F%2Fgithub.com%2Funitedideas%2Fai-harness-migration-recipes)
+- **Twitter/X**: Thread at [@bringyour](https://twitter.com/bringyour)
+- **Reddit**: r/learnprogramming, r/coding, r/MachineLearning
+- **dev.to**: [Full article](https://dev.to/bringyour/migrating-your-ai-agent-harness) (publish via Shane's account)
+- **Awesome Lists**: Submit via [SUBMISSION_PLAYBOOK.md](SUBMISSION_PLAYBOOK.md) (awesome-cli-apps, awesome-developer-tools, awesome-ai-tools)
 
-**Execution timeline**: 30 min of social posts today → 30 min of awesome-list PRs this week → ongoing directory submissions.
+For detailed submission strategy, see [DISTRIBUTION_TRACKER.md](DISTRIBUTION_TRACKER.md) and [SUBMISSION_PLAYBOOK.md](SUBMISSION_PLAYBOOK.md).
 
 ## Contributing
 

@@ -130,11 +130,13 @@ def submit_to_list(list_key: str, config: dict, dry_run: bool = False) -> bool:
     if not fork_repo(config["upstream_repo"], list_key, dry_run):
         return False
 
-    os.chdir(list_key)
+    if not dry_run:
+        os.chdir(list_key)
 
     # Add entry
     if not add_entry_to_readme(config["readme_file"], config["section_name"], ENTRY, dry_run):
-        os.chdir("..")
+        if not dry_run:
+            os.chdir("..")
         return False
 
     if not dry_run:
@@ -165,7 +167,8 @@ def submit_to_list(list_key: str, config: dict, dry_run: bool = False) -> bool:
     else:
         print(f"  [DRY RUN] Would commit, push, and create PR")
 
-    os.chdir("..")
+    if not dry_run:
+        os.chdir("..")
     return True
 
 
