@@ -4,9 +4,10 @@
 [![License](https://img.shields.io/badge/license-CC%20BY%204.0-blue)](LICENSE.md)
 ![Recipes](https://img.shields.io/badge/recipes-12%2F12-brightgreen)
 ![Verified](https://img.shields.io/badge/verified-hand--tested-success)
+[![awesome-mcp-servers](https://img.shields.io/badge/listed-awesome--mcp--servers-blue)](https://github.com/appcypher/awesome-mcp-servers)
 
 Hand-written, file-by-file mappings for moving an AI coding agent's
-configuration ("harness") between tools.
+configuration ("harness") between tools. **Migrate between Claude Code ↔ Cursor ↔ Codex ↔ Aider** without losing your system prompts, skills, or memory.
 
 Every AI coding tool stores your agent differently. **Claude Code** uses
 `~/.claude/` with `CLAUDE.md` + `agents/` + `skills/`. **Cursor** uses
@@ -19,6 +20,22 @@ This repo is the manual recipes for all **12 bidirectional migrations**
 (4 tools, 4 × 3 ÷ 2 unique pairs = 6 directions per tool). One file per 
 migration pair, each showing the source and target layouts, the format 
 differences, and the subtle things that will bite you if you copy-paste.
+
+## Quick Start
+
+**Want to automate this?** Use [BringYour](https://bringyour.ai):
+
+```bash
+npx portable migrate --from claude-code --to cursor
+npx portable migrate --from cursor --to codex
+```
+
+One command handles everything. Early-bird pricing: **$19 lifetime** (first 10 buyers), then $29, then $49. All future tool upgrades included.
+
+- [Try BringYour →](https://bringyour.ai)
+- [See how it works →](https://bringyour.ai/how-it-works)
+
+**Prefer manual control?** See the recipes below.
 
 ## Recipes
 

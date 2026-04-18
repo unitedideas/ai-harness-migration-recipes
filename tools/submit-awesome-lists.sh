@@ -22,13 +22,6 @@ if [[ "$DRY_RUN" == "--dry-run" ]]; then
   log_info "DRY RUN MODE — no actual changes will be made"
 fi
 
-# Awesome lists to submit to
-declare -A LISTS=(
-  [awesome-cli-apps]="sindresorhus/awesome-cli-apps|readme.md|Tools|AI Harness Migration Recipes"
-  [awesome-developer-tools]="imteekay/awesome-developer-tools|README.md|Development|AI Harness Migration Recipes"
-  [awesome-ai]="sindresorhus/awesome|README.md|Development|AI Harness Migration Recipes"
-)
-
 submit_to_list() {
   local list_key=$1
   local repo_path=$2
@@ -38,16 +31,10 @@ submit_to_list() {
   log_info "Processing $list_key..."
 
   # Check if fork already exists
-  if gh repo view "$repo_path" &>/dev/null; then
+  if gh repo view "$repo_path" &>/dev/null 2>&1; then
     log_warn "Fork already exists at $repo_path"
-    read -p "Use existing fork? (y/n) " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-      log_info "Skipping $list_key"
-      return 0
-    fi
   else
-    log_info "Forking $repo_path..."
+    log_info "Forking and cloning $repo_path..."
     if [[ "$DRY_RUN" != "--dry-run" ]]; then
       gh repo fork "$repo_path" --clone
     else
@@ -68,14 +55,18 @@ submit_to_list() {
   log_info "Editing $readme_file to add entry under [$section] section..."
 
   if [[ "$DRY_RUN" != "--dry-run" ]]; then
-    # Find the section and add entry (sed-based, works on macOS and Linux)
-    # Look for section header, find the first list item, insert before it
-    sed -i.bak "/^### $section$/,/^###/{ /^- /i\\
+    # Find the section and add entry before first list item in that section
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+      # macOS sed
+      sed -i '' "/^### $section$/,/^###/{ /^- /i\\
 $ENTRY
 }" "$readme_file"
-
-    # Clean up backup
-    rm -f "${readme_file}.bak"
+    else
+      # Linux sed
+      sed -i "/^### $section$/,/^###/{ /^- /i\\
+$ENTRY
+}" "$readme_file"
+    fi
 
     log_info "Committing changes..."
     git add "$readme_file"
@@ -101,13 +92,13 @@ $ENTRY
 log_info "Awesome-list submission automation"
 log_info "Starting submission process..."
 
-for list_key in "${!LISTS[@]}"; do
-  IFS='|' read -r repo_path readme_file section entry_name <<< "${LISTS[$list_key]}"
-  submit_to_list "$list_key" "$repo_path" "$readme_file" "$section"
-done
+# Process each list (name, repo, readme, section)
+submit_to_list "awesome-cli-apps" "sindresorhus/awesome-cli-apps" "README.md" "Tools"
+submit_to_list "awesome-developer-tools" "imteekay/awesome-developer-tools" "README.md" "Development"
+submit_to_list "awesome-ai" "sindresorhus/awesome" "README.md" "Development"
 
 log_info "Submission process complete!"
 log_info "Next steps:"
-log_info "  1. Check PR status: gh pr list --repo unitedideas/ai-harness-migration-recipes"
+log_info "  1. Check PR status: gh pr list"
 log_info "  2. Once merged, update README.md with 'Featured in' badges"
 log_info "  3. Post announcement to HN/Twitter"
